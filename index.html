@@ -115,7 +115,7 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
   }
 
   try {
-    const response = await fetch('https://script.google.com/macros/s/AKfycbyzeswk3YEZH7yJe4OZO4RFqtqVuwVhNLs2ZWQ0_5dw4wUrcMCnW41UmiJ-crhfDmEuuA/exec', {
+    const response = await fetch('https://script.google.com/macros/s/AKfycbxcfSvd98VIbxsg7wV4XbW_bexgoWK-_38fi1T24-PywzbiZ6yd7ktFVt4QOVMP_6ZBkA/exec', {
       method: 'POST',
       body: JSON.stringify({ investigator, summary, observations, files: filesData, code })
     });
@@ -136,4 +136,5 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
 </script>
 </body>
 </html>
+
 
