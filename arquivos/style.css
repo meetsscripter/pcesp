@@ -88,6 +88,7 @@ p:hover {
 }
 
 .form-section {
+  display: none;
   background: #1f2733;
   padding: 40px 30px;
   max-width: 600px;
@@ -97,6 +98,19 @@ p:hover {
   color: #f0f0f0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
+.status-text {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #fff3cd; /* amarelo claro */
+  color: #856404;            /* marrom escuro */
+  border: 1px solid #ffeeba;
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 1.1em;
+  display: none;
+}
+
 
 .form-section h2 {
   text-align: center;
@@ -225,3 +239,14 @@ form select:focus {
   box-shadow: 0 0 6px #3b88ff80;
 }
 
+.status-text {
+  margin-top: 12px;
+  padding: 10px;
+  background-color: #fff3cd; /* Amarelo claro */
+  color: #856404;            /* Marrom escuro */
+  border: 1px solid #ffeeba;
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 1.1em;
+  display: none;
+}
