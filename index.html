@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <title>Registro de Investigação</title>
   <link rel="stylesheet" href="arquivos/style.css" />
+  <link rel="icon" href="arquivos/Logo.png" type="image/png" />
 </head>
 <body>
   <header>
     <h1>Registro de Investigação</h1>
   </header>
 
-  <!-- Área principal com logo e botão lado a lado -->
   <div class="main-container">
     <div class="left">
       <img src="arquivos/Logo.png" alt="Polícia Civil SP" />
@@ -18,12 +18,13 @@
 
     <div class="right">
       <a id="discordLogin" href="#" class="discord-button">Entrar com Discord</a>
+      <div id="loginStatus" class="status-text" style="display:none;"></div>
     </div>
   </div>
 
-  <!-- Seção do formulário, inicialmente oculta -->
-  <section class="form-section">
-    <form id="investigationForm" style="display: none;">
+  <!-- Container da seção do formulário oculto inicialmente -->
+  <section class="form-section" style="display:none;">
+    <form id="investigationForm">
       <h2>Registro de Investigação</h2>
 
       <label for="investigator">Investigador responsável</label>
@@ -61,5 +62,3 @@
   <script src="arquivos/script.js"></script>
 </body>
 </html>
-
-
