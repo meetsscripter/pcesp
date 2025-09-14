@@ -22,28 +22,35 @@
   </div>
 
   <!-- Seção do formulário, inicialmente oculta -->
-<section class="form-section">
-  <form id="investigationForm" style="display: none;">
-    <h2>Registro de Investigação</h2>
+  <section class="form-section">
+    <form id="investigationForm" style="display: none;">
+      <h2>Registro de Investigação</h2>
 
-    <label for="investigator">Investigador responsável</label>
-    <input id="investigator" type="text" name="investigator" required readonly />
+      <label for="investigator">Investigador responsável</label>
+      <input id="investigator" type="text" name="investigator" required readonly />
 
-    <label for="summary">Resumo do caso</label>
-    <textarea id="summary" name="summary" rows="4" required></textarea>
+      <label for="crimeType">Tipo de Crime</label>
+      <select id="crimeType" name="crimeType" required>
+        <option value="">Selecione</option>
+        <option value="organizado">Crime Organizado</option>
+        <option value="armas">Armas e Componentes</option>
+        <option value="cibernetico">Crimes Cibernéticos</option>
+      </select>
 
-    <label for="observations">Observações adicionais</label>
-    <textarea id="observations" name="observations" rows="4"></textarea>
+      <label for="summary">Resumo do caso</label>
+      <textarea id="summary" name="summary" rows="4" required></textarea>
 
-    <label for="files">Evidências (máx 10 arquivos, ≤10MB cada, total ≤25MB)</label>
-    <input id="files" type="file" name="files" multiple accept="image/*,video/*" />
-    <small id="mbStatus">Total: 0 MB / 25 MB</small>
+      <label for="observations">Observações adicionais</label>
+      <textarea id="observations" name="observations" rows="4"></textarea>
 
-    <button type="submit">Enviar</button>
-    <div id="status"></div>
-  </form>
-</section>
+      <label for="files">Evidências (máx 10 arquivos, ≤10MB cada, total ≤25MB)</label>
+      <input id="files" type="file" name="files" multiple accept="image/*,video/*" />
+      <small id="mbStatus">Total: 0 MB / 25 MB</small>
 
+      <button type="submit">Enviar</button>
+      <div id="status"></div>
+    </form>
+  </section>
 
   <footer>
     &copy; 2025 Polícia Civil do Estado de São Paulo. Todos os direitos reservados.
