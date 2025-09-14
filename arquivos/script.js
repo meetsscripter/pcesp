@@ -45,18 +45,34 @@ async function fetchDiscordUser(token) {
 // Botão login
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
+
+  const loginStatus = document.getElementById("loginStatus");
+  loginStatus.innerHTML = "<strong>⏳ Aguarde o carregamento...</strong>";
+  loginStatus.style.display = "block";
+
   try {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    // Preenche formulário com <@ID>
+    // Preenche o campo do investigador
     document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
+
+    // Oculta o botão de login e a mensagem de status
     document.getElementById("discordLogin").style.display = "none";
+    loginStatus.style.display = "none";
+
+    // Mostra a seção do formulário e o formulário em si
+    document.querySelector('.form-section').style.display = "block";
     document.getElementById("investigationForm").style.display = "block";
+
   } catch (err) {
+    loginStatus.style.display = "none";
     alert("Falha no login com Discord: " + err);
   }
 });
+
+
+
 
 // ---------------------
 // Código de arquivos e envio
