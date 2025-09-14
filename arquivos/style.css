@@ -7,13 +7,17 @@
 
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(180deg, #0d1117, #1b1f23);
+  background-image: url('https://clipart-library.com/images/ki85yyEbT.jpg'); /* URL do seu GIF */
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
   color: #fff;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
+
 
 /* Header */
 header {
