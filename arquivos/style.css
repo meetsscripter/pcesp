@@ -46,7 +46,7 @@ header h1 {
   width: 260px;
   height: auto;
   margin-bottom: 15px;
-  filter: drop-shadow(0 0 8px rgba(88, 101, 242, 0.7));
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
 }
 
 /* Texto geral */
