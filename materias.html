@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Registro de Apreensões</title>
+  <link rel="stylesheet" href="arquivos/style.css" />
+  <link rel="icon" href="arquivos/Logo.png" type="image/png" />
+</head>
+<body>
+  <header>
+    <h1>Registro de Apreensões</h1>
+  </header>
+
+  <div class="main-container">
+    <div class="left">
+      <img src="arquivos/Logo.png" alt="Polícia Civil SP" />
+    </div>
+
+    <div class="right">
+      <a id="discordLogin" href="#" class="discord-button">Entrar com Discord</a>
+      <div id="loginStatus" class="status-text" style="display:none;"></div>
+    </div>
+  </div>
+
+  <section class="form-section" style="display:none;">
+    <form id="apreensaoForm">
+      <h2>Registro de Apreensões</h2>
+
+      <label for="responsavel">Responsável</label>
+      <input id="responsavel" type="text" name="responsavel" required readonly />
+
+      <label for="materiais">Materiais Apreendidos</label>
+      <div id="materiaisContainer"></div>
+      <button type="button" id="addMaterial">Adicionar Material</button>
+
+      <label for="participantes">Participantes</label>
+      <input id="participantes" type="text" name="participantes" placeholder="Digite os participantes separados por vírgula" />
+
+      <label for="files">Evidências (máx 10 arquivos, ≤10MB cada, total ≤25MB)</label>
+      <input id="files" type="file" name="files" multiple accept="image/*,video/*" />
+      <small id="mbStatus">Total: 0 MB / 25 MB</small>
+
+      <button type="submit">Enviar</button>
+      <div id="status"></div>
+    </form>
+  </section>
+
+  <footer>
+    &copy; 2025 Polícia Civil do Estado de São Paulo. Todos os direitos reservados.
+  </footer>
+
+  <script src="arquivos/apreensao.js"></script>
+</body>
+</html>
