@@ -250,3 +250,80 @@ form select:focus {
   font-size: 1.1em;
   display: none;
 }
+
+/* --------------------- */
+/* Seção de Materiais    */
+/* --------------------- */
+
+.materials-container {
+  width: 100%;
+  max-width: 600px;
+  background: #1f2733;
+  padding: 20px 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.material-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.material-row select,
+.material-row input[type="number"] {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #2b3a4b;
+  color: #fff;
+  flex: 1;
+  font-size: 14px;
+}
+
+.material-row input[type="number"] {
+  max-width: 80px;
+}
+
+.material-row button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background-color: #3b88ff;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.material-row button:hover {
+  background-color: #276dd9;
+}
+
+#addMaterial {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: #5865f2;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 10px;
+  transition: background 0.3s ease;
+}
+
+#addMaterial:hover {
+  background-color: #4752c4;
+}
+
+/* Placeholder agradável */
+.materials-container label {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #cfd8e9;
+}
