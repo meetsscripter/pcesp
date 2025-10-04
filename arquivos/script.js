@@ -3,11 +3,9 @@ async function loginWithDiscord() {
   const data = await res.json();
   const url = data.url;
 
-  const width = 500;
-  const height = 700;
+  const width = 500, height = 700;
   const left = (screen.width - width) / 2;
   const top = (screen.height - height) / 2;
-
   const popup = window.open(url, "DiscordLogin", `width=${width},height=${height},top=${top},left=${left}`);
 
   return new Promise((resolve, reject) => {
@@ -17,7 +15,6 @@ async function loginWithDiscord() {
           clearInterval(interval);
           reject("Login cancelado ou popup fechado");
         }
-
         const hash = popup.location.hash;
         if (hash) {
           clearInterval(interval);
@@ -27,9 +24,7 @@ async function loginWithDiscord() {
           if (token) resolve(token);
           else reject("Token não encontrado");
         }
-      } catch (err) {
-        // Cross-origin temporário
-      }
+      } catch {}
     }, 500);
   });
 }
@@ -41,11 +36,8 @@ async function fetchDiscordUser(token) {
   return await res.json();
 }
 
-// ---------------------
-// Botão login
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
-
   const loginStatus = document.getElementById("loginStatus");
   loginStatus.innerHTML = "<strong>⏳ Aguarde o carregamento...</strong>";
   loginStatus.style.display = "block";
@@ -54,37 +46,24 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    // Preenche o campo do investigador
     document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
-
-    // Oculta o botão de login e a mensagem de status
     document.getElementById("discordLogin").style.display = "none";
     loginStatus.style.display = "none";
-
-    // Mostra a seção do formulário e o formulário em si
     document.querySelector('.form-section').style.display = "block";
-    document.getElementById("investigationForm").style.display = "block";
-
   } catch (err) {
     loginStatus.style.display = "none";
     alert("Falha no login com Discord: " + err);
   }
 });
 
-
-
-
 // ---------------------
-// Código de arquivos e envio
-
+// Arquivos e envio
 const filesInput = document.getElementById('files');
 const mbStatus = document.getElementById('mbStatus');
 
 filesInput.addEventListener('change', () => {
   let totalMB = 0;
-  for (const file of filesInput.files) {
-    totalMB += file.size / (1024*1024);
-  }
+  for (const file of filesInput.files) totalMB += file.size / (1024*1024);
   totalMB = Math.round(totalMB * 100) / 100;
   mbStatus.innerText = `Total: ${totalMB} MB / 25 MB`;
 
@@ -96,7 +75,6 @@ filesInput.addEventListener('change', () => {
       return;
     }
   }
-
   if (totalMB > 25) {
     alert("❌ Total de arquivos ultrapassa 25MB!");
     filesInput.value = "";
@@ -122,10 +100,11 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
   btn.disabled = true;
   status.innerText = "⏳ Enviando...";
 
-  const investigator = form.investigator.value; // já é <@ID>
+  const investigator = form.investigator.value;
   const summary = form.summary.value;
   const observations = form.observations.value;
-  const crimeType = form.crimeType.value; // NOVO
+  const crimeType = form.crimeType.value;
+  const crimeCase = form.crimeCase.value || "N/A";
 
   if (!crimeType) {
     status.innerText = "❌ Tipo de crime obrigatório";
@@ -134,7 +113,6 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
   }
 
   const files = filesInput.files;
-
   if (files.length > 10) {
     status.innerText = "❌ Máximo 10 arquivos";
     btn.disabled = false;
@@ -166,28 +144,24 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
         investigator,
         summary,
         observations,
-        crimeType, // NOVO
+        crimeType,
+        crimeCase,
         files: filesData
       })
     });
 
     const res = await response.json();
-
     if (res.status === 'ok') {
       status.innerText = `✅ Enviado! ${filesData.length} arquivo(s)`;
       const savedInvestigator = form.investigator.value;
-
-      // Limpa apenas os campos desejados
       form.summary.value = "";
       form.observations.value = "";
       form.crimeType.value = "";
+      form.crimeCase.value = "N/A";
       filesInput.value = "";
       mbStatus.innerText = `Total: 0 MB / 25 MB`;
       status.innerText = "";
-
-      // Restaura o investigador
       form.investigator.value = savedInvestigator;
-
     } else {
       status.innerText = "❌ " + (res.message || JSON.stringify(res));
     }
