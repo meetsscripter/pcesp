@@ -85,6 +85,9 @@ function createMaterialRow(name="", qty="") {
       <option value="Glock">Glock</option>
       <option value="Thompson">Thompson</option>
       <option value="UMP">UMP</option>
+      <option value="Zip Lock">Zip Lock</option>
+      <option value="Sementes de Marijuana">Sementes de Marijuana</option>
+      <option value="Fenilacetona">Fenilacetona</option>
     </select>
     <input type="number" class="material-qty" placeholder="Valor" min="1" value="${qty}" style="width:80px;margin-left:5px;" />
     <button type="button" class="removeMaterial">❌</button>
@@ -205,4 +208,5 @@ if(materiais.length===0) {
     btn.disabled = false;
   }
 });
+
 
