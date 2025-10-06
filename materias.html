@@ -17,10 +17,6 @@
       border-radius: 8px;
       max-width: 100%;
     }
-    .material-row {
-      display: flex;
-      align-items: center;
-    }
   </style>
 </head>
 <body>
@@ -57,7 +53,6 @@
       <input id="files" type="file" name="files" multiple accept="image/*,video/*" />
       <small id="mbStatus">Total: 0 MB / 25 MB</small>
 
-      <!-- Mapa para seleção de local -->
       <div id="mapContainer">
         <h3>Selecione o Local no Mapa</h3>
         <canvas id="mapCanvas"></canvas>
@@ -75,8 +70,11 @@
     &copy; 2025 Polícia Civil do Estado de São Paulo. Todos os direitos reservados.
   </footer>
 
+  <!-- Script principal -->
+  <script src="arquivos/apreensao.js"></script>
+
+  <!-- Script do mapa -->
   <script>
-    // Configuração do mapa
     const canvas = document.getElementById("mapCanvas");
     const ctx = canvas.getContext("2d");
     const img = new Image();
@@ -113,8 +111,5 @@
       reader.readAsDataURL(blob);
     });
   </script>
-
-  <!-- Script principal do formulário -->
-  <script src="arquivos/apreensao.js"></script>
 </body>
 </html>
