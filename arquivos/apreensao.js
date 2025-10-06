@@ -72,22 +72,11 @@ function createMaterialRow(name="", qty="") {
   div.innerHTML = `
     <select class="material-name">
       <option value="">Selecione</option>
-      <option value="Canabis">Canabis</option>
-      <option value="Colete">Colete</option>
-      <option value="762">762</option>
-      <option value="Maconha">Maconha</option>
-      <option value="Dinheiro Sujo">Dinheiro Sujo</option>
-      <option value="Metafetamina">Metafetamina</option>
-      <option value="Kevlar">Kevlar</option>
-      <option value="Lockpick">Lockpick</option>
-      <option value="Peça de arma">Peça de arma</option>
-      <option value="AK47">AK47</option>
-      <option value="Glock">Glock</option>
-      <option value="Thompson">Thompson</option>
-      <option value="UMP">UMP</option>
-      <option value="Zip Lock">Zip Lock</option>
-      <option value="Sementes de Marijuana">Sementes de Marijuana</option>
-      <option value="Fenilacetona">Fenilacetona</option>
+      <option value="Arma">Arma</option>
+      <option value="Drogas">Drogas</option>
+      <option value="Dinheiro">Dinheiro</option>
+      <option value="Veículo">Veículo</option>
+      <option value="Documentos">Documentos</option>
     </select>
     <input type="number" class="material-qty" placeholder="Valor" min="1" value="${qty}" style="width:80px;margin-left:5px;" />
     <button type="button" class="removeMaterial">❌</button>
@@ -153,14 +142,75 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   status.innerText = "⏳ Enviando...";
 
   // validação do mapa
-  const mapX = form.mapX.value;
-  const mapY = form.mapY.value;
+  const mapX = document.getElementById("mapX").value;
+  const mapY = document.getElementById("mapY").value;
   if(!mapX || !mapY) {
     status.innerText = "❌ Selecione o local no mapa antes de enviar!";
     btn.disabled = false;
     return;
   }
 
-  // restante do código: coleta de materiais, arquivos e envio
-});
+  const responsavel = form.responsavel.value;
+  const participantes = form.participantes.value;
 
+  // coleta materiais e soma quantidades iguais
+  const materialRows = document.querySelectorAll('.material-row');
+  const materiaisMap = {};
+  materialRows.forEach(row => {
+    const name = row.querySelector('.material-name').value;
+    const qty = parseInt(row.querySelector('.material-qty').value) || 0;
+    if(name && qty) {
+      if(!materiaisMap[name]) materiaisMap[name] = 0;
+      materiaisMap[name] += qty;
+    }
+  });
+  const materiais = Object.entries(materiaisMap).map(([name, qty]) => ({ name, qty }));
+  if(materiais.length===0) {
+    status.innerText = "❌ Adicione pelo menos um material";
+    btn.disabled = false;
+    return;
+  }
+
+  // coleta arquivos
+  const files = filesInput.files;
+  const filesData = [];
+  for (const file of files) {
+    const base64 = await fileToBase64(file);
+    filesData.push({name: file.name, type: file.type, base64});
+  }
+
+  // coleta mapa
+  const mapImageBase64 = document.getElementById("mapImage").value;
+  if(mapImageBase64) {
+    filesData.push({
+      name: "mapa_marcado.png",
+      type: "image/png",
+      base64: mapImageBase64.split(',')[1]
+    });
+  }
+
+  // envio via Apps Script
+  try {
+    const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec', {
+      method:'POST',
+      body: JSON.stringify({responsavel, participantes, materiais, files: filesData})
+    });
+    const result = await res.json();
+    if(result.status==='ok') {
+      status.innerText = `✅ Apreensões enviadas!`;
+      materiaisContainer.innerHTML = "";
+      form.participantes.value = "";
+      filesInput.value = "";
+      document.getElementById("mapX").value = "";
+      document.getElementById("mapY").value = "";
+      document.getElementById("mapImage").value = "";
+      mbStatus.innerText = `Total: 0 MB / 25 MB`;
+    } else {
+      status.innerText = `❌ ${result.message || JSON.stringify(result)}`;
+    }
+  } catch(err) {
+    status.innerText = `❌ Falha na comunicação: ${err.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+});
