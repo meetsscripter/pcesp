@@ -156,27 +156,25 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   const responsavel = form.responsavel.value;
   const participantes = form.participantes.value;
 
-// coleta materiais e soma quantidades iguais
-const materialRows = document.querySelectorAll('.material-row');
-const materiaisMap = {}; // { nome: soma }
-materialRows.forEach(row => {
-  const name = row.querySelector('.material-name').value;
-  const qty = parseInt(row.querySelector('.material-qty').value) || 0;
-  if(name && qty) {
-    if(!materiaisMap[name]) materiaisMap[name] = 0;
-    materiaisMap[name] += qty;
+  // coleta materiais e soma quantidades iguais
+  const materialRows = document.querySelectorAll('.material-row');
+  const materiaisMap = {};
+  materialRows.forEach(row => {
+    const name = row.querySelector('.material-name').value;
+    const qty = parseInt(row.querySelector('.material-qty').value) || 0;
+    if(name && qty) {
+      if(!materiaisMap[name]) materiaisMap[name] = 0;
+      materiaisMap[name] += qty;
+    }
+  });
+
+  const materiais = Object.entries(materiaisMap).map(([name, qty]) => ({ name, qty }));
+
+  if(materiais.length===0) {
+    status.innerText = "❌ Adicione pelo menos um material";
+    btn.disabled = false;
+    return;
   }
-});
-
-// transforma em array de objetos para envio
-const materiais = Object.entries(materiaisMap).map(([name, qty]) => ({ name, qty }));
-
-if(materiais.length===0) {
-  status.innerText = "❌ Adicione pelo menos um material";
-  btn.disabled = false;
-  return;
-}
-
 
   // coleta arquivos
   const files = filesInput.files;
@@ -184,6 +182,14 @@ if(materiais.length===0) {
   for (const file of files) {
     const base64 = await fileToBase64(file);
     filesData.push({name: file.name, type: file.type, base64});
+  }
+
+  // adiciona a imagem do mapa (se houver)
+  const mapBase64 = document.getElementById('mapImage').value;
+  if(mapBase64) {
+    // remove o prefixo data:image/png;base64,
+    const base64Data = mapBase64.split(',')[1];
+    filesData.push({ name: "mapa_marcado.png", type: "image/png", base64: base64Data });
   }
 
   try {
@@ -199,6 +205,9 @@ if(materiais.length===0) {
       form.participantes.value = "";
       filesInput.value = "";
       mbStatus.innerText = `Total: 0 MB / 25 MB`;
+      document.getElementById('mapX').value = "";
+      document.getElementById('mapY').value = "";
+      document.getElementById('mapImage').value = "";
     } else {
       status.innerText = `❌ ${result.message || JSON.stringify(result)}`;
     }
@@ -208,5 +217,3 @@ if(materiais.length===0) {
     btn.disabled = false;
   }
 });
-
-
