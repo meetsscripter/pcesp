@@ -214,3 +214,4 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
