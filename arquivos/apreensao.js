@@ -72,11 +72,22 @@ function createMaterialRow(name="", qty="") {
   div.innerHTML = `
     <select class="material-name">
       <option value="">Selecione</option>
-      <option value="Arma">Arma</option>
-      <option value="Drogas">Drogas</option>
-      <option value="Dinheiro">Dinheiro</option>
-      <option value="Veículo">Veículo</option>
-      <option value="Documentos">Documentos</option>
+      <option value="Canabis">Canabis</option>
+      <option value="Colete">Colete</option>
+      <option value="762">762</option>
+      <option value="Maconha">Maconha</option>
+      <option value="Dinheiro Sujo">Dinheiro Sujo</option>
+      <option value="Metafetamina">Metafetamina</option>
+      <option value="Kevlar">Kevlar</option>
+      <option value="Lockpick">Lockpick</option>
+      <option value="Peça de arma">Peça de arma</option>
+      <option value="AK47">AK47</option>
+      <option value="Glock">Glock</option>
+      <option value="Thompson">Thompson</option>
+      <option value="UMP">UMP</option>
+      <option value="Zip Lock">Zip Lock</option>
+      <option value="Sementes de Marijuana">Sementes de Marijuana</option>
+      <option value="Fenilacetona">Fenilacetona</option>
     </select>
     <input type="number" class="material-qty" placeholder="Valor" min="1" value="${qty}" style="width:80px;margin-left:5px;" />
     <button type="button" class="removeMaterial">❌</button>
@@ -214,4 +225,5 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
 
