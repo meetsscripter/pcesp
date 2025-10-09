@@ -1,3 +1,6 @@
+// ---------------------------
+// LOGIN COM DISCORD
+// ---------------------------
 async function loginWithDiscord() {
   const res = await fetch('https://script.google.com/macros/s/AKfycbxcfSvd98VIbxsg7wV4XbW_bexgoWK-_38fi1T24-PywzbiZ6yd7ktFVt4QOVMP_6ZBkA/exec');
   const data = await res.json();
@@ -57,7 +60,9 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
 });
 
 // ---------------------
-// Arquivos e envio
+// SISTEMA DE UPLOAD E ENVIO
+// ---------------------
+
 const filesInput = document.getElementById('files');
 const mbStatus = document.getElementById('mbStatus');
 
@@ -75,6 +80,7 @@ filesInput.addEventListener('change', () => {
       return;
     }
   }
+
   if (totalMB > 25) {
     alert("❌ Total de arquivos ultrapassa 25MB!");
     filesInput.value = "";
@@ -91,6 +97,10 @@ async function fileToBase64(file) {
   });
 }
 
+// ---------------------
+// FORMULÁRIO DE ENVIO
+// ---------------------
+
 document.getElementById('investigationForm').addEventListener('submit', async e => {
   e.preventDefault();
   const form = e.target;
@@ -103,14 +113,8 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
   const investigator = form.investigator.value;
   const summary = form.summary.value;
   const observations = form.observations.value;
-  const crimeType = form.crimeType.value;
+  const crimeType = form.crimeType.value || "Não especificado";
   const crimeCase = form.crimeCase.value || "N/A";
-
-  if (!crimeType) {
-    status.innerText = "❌ Tipo de crime obrigatório";
-    btn.disabled = false;
-    return;
-  }
 
   const files = filesInput.files;
   if (files.length > 10) {
@@ -152,7 +156,7 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
 
     const res = await response.json();
     if (res.status === 'ok') {
-      status.innerText = `✅ Enviado! ${filesData.length} arquivo(s)`;
+      status.innerText = `✅ Enviado com sucesso!`;
       const savedInvestigator = form.investigator.value;
       form.summary.value = "";
       form.observations.value = "";
@@ -160,7 +164,7 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
       form.crimeCase.value = "N/A";
       filesInput.value = "";
       mbStatus.innerText = `Total: 0 MB / 25 MB`;
-      status.innerText = "";
+      setTimeout(() => { status.innerText = ""; }, 2000);
       form.investigator.value = savedInvestigator;
     } else {
       status.innerText = "❌ " + (res.message || JSON.stringify(res));
