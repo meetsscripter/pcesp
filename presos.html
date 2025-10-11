@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Presos</title>
+  <link rel="stylesheet" href="arquivos/style.css" />
+  <link rel="icon" href="arquivos/Logo.png" type="image/png" />
+</head>
+<body>
+  <header>
+    <h1>Registro de Presos</h1>
+  </header>
+
+  <div class="main-container">
+    <div class="left">
+      <img src="arquivos/Logo.png" alt="Polícia Civil SP" />
+    </div>
+
+    <div class="right">
+      <a id="discordLogin" href="#" class="discord-button">Entrar com Discord</a>
+      <div id="loginStatus" class="status-text" style="display:none;"></div>
+    </div>
+  </div>
+
+  <section class="form-section">
+    <form id="prisonerForm">
+      <h2>Registro de Preso</h2>
+
+      <label for="investigator">Responsável</label>
+      <input id="investigator" type="text" name="investigator" required readonly />
+
+      <label for="prisonerName">Nome do Preso</label>
+      <input id="prisonerName" type="text" name="prisonerName" required />
+
+      <label for="prisonerCPF">CPF do Preso</label>
+      <input id="prisonerCPF" type="text" name="prisonerCPF" required />
+
+      <label for="description">Descrição da Ocorrência</label>
+      <textarea id="description" name="description" rows="3" required></textarea>
+
+      <label>Artigos Aplicáveis</label>
+      <div id="articlesContainer" class="materials-container"></div>
+
+        <label>Integrantes Envolvidos</label>
+        <div id="responsiblesContainer" class="materials-container">
+        <!-- Integrantes adicionados aparecerão aqui -->
+        </div>
+        <div class="material-row">
+        <input id="responsibleInput" type="text" placeholder="Digite o ID Discord">
+        <button type="button" id="addResponsible">Adicionar</button>
+        </div>
+
+
+      <label for="files">Foto do Detido</label>
+      <input id="files" type="file" name="files" accept="image/*" />
+      <small id="mbStatus">Total: 0 MB / 10 MB</small>
+
+      <button type="submit">Enviar Registro</button>
+      <div id="status"></div>
+    </form>
+  </section>
+
+  <footer>
+    &copy; 2025 Polícia Civil do Estado de São Paulo. Todos os direitos reservados.
+  </footer>
+
+  <script src="arquivos/preso.js"></script>
+</body>
+</html>
