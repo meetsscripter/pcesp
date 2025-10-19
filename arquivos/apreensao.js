@@ -1,16 +1,19 @@
 // ---------------------------
-// CONFIGURAÇÕES
+// CONFIGURAÇÃO
 // ---------------------------
+
 const CLIENT_ID = "996904470069911623";
 const REDIRECT_URI = "https://meetsscripter.github.io/investigativa/materias.html";
-const GUILD_ID = "906991181228048455"; // servidor que o usuário precisa estar
-const SPREADSHEET_WEBAPP = "https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec";
+const REQUIRED_TAG = "933222609653497908"; // tag necessária para liberar
 
 // ---------------------------
 // LOGIN COM DISCORD
 // ---------------------------
+
 async function loginWithDiscord() {
-  const url = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify%20guilds`;
+  const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec');
+  const data = await res.json();
+  const url = data.url;
 
   const width = 500, height = 700;
   const left = (screen.width - width) / 2;
@@ -45,23 +48,18 @@ async function fetchDiscordUser(token) {
   return await res.json();
 }
 
-// Verifica se o usuário está no servidor
-async function isUserInGuild(token, guildId) {
-  try {
-    const res = await fetch("https://discord.com/api/users/@me/guilds", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (!res.ok) return false;
-    const guilds = await res.json();
-    return guilds.some(g => g.id === guildId);
-  } catch {
-    return false;
-  }
+// Pega guilds do usuário
+async function fetchUserGuilds(token) {
+  const res = await fetch("https://discord.com/api/users/@me/guilds", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return await res.json();
 }
 
 // ---------------------------
-// LOGIN E LIBERAÇÃO DO FORMULÁRIO
+// LOGIN E VERIFICAÇÃO
 // ---------------------------
+
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
   const loginStatus = document.getElementById("loginStatus");
@@ -71,19 +69,20 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
   try {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
+    const guilds = await fetchUserGuilds(token);
 
-    const inGuild = await isUserInGuild(token, GUILD_ID);
-    if (!inGuild) {
+    // verifica se está em algum servidor com a tag necessária
+    const hasRequiredTag = guilds.some(g => g.id === REQUIRED_TAG);
+
+    if (hasRequiredTag) {
+      document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
+      document.getElementById("discordLogin").style.display = "none";
       loginStatus.style.display = "none";
-      alert("❌ Você precisa estar no servidor para acessar este formulário.");
-      return;
+      document.querySelector('.form-section').style.display = "block";
+    } else {
+      loginStatus.style.display = "none";
+      alert("❌ Você não tem permissão para acessar este formulário.");
     }
-
-    // Libera o formulário
-    document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
-    document.getElementById("discordLogin").style.display = "none";
-    loginStatus.style.display = "none";
-    document.querySelector('.form-section').style.display = "block";
 
   } catch (err) {
     loginStatus.style.display = "none";
@@ -94,6 +93,7 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
 // ---------------------------
 // MATERIAIS DINÂMICOS
 // ---------------------------
+
 const materiaisContainer = document.getElementById('materiaisContainer');
 const addMaterialBtn = document.getElementById('addMaterial');
 
@@ -127,14 +127,20 @@ function createMaterialRow(name="", qty="") {
   materiaisContainer.appendChild(div);
 
   div.querySelector('.material-name').value = name;
-  div.querySelector('.removeMaterial').addEventListener('click', () => div.remove());
+
+  div.querySelector('.removeMaterial').addEventListener('click', () => {
+    div.remove();
+  });
 }
 
-addMaterialBtn.addEventListener('click', () => createMaterialRow());
+addMaterialBtn.addEventListener('click', () => {
+  createMaterialRow();
+});
 
 // ---------------------------
-// ARQUIVOS
+// UPLOAD DE ARQUIVOS
 // ---------------------------
+
 const filesInput = document.getElementById('files');
 const mbStatus = document.getElementById('mbStatus');
 
@@ -171,6 +177,7 @@ async function fileToBase64(file) {
 // ---------------------------
 // ENVIO DO FORMULÁRIO
 // ---------------------------
+
 document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   e.preventDefault();
   const form = e.target;
@@ -179,7 +186,6 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   btn.disabled = true;
   status.innerText = "⏳ Enviando...";
 
-  // validação do mapa
   const mapX = document.getElementById("mapX").value;
   const mapY = document.getElementById("mapY").value;
   if(!mapX || !mapY) {
@@ -189,9 +195,8 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   }
 
   const responsavel = form.responsavel.value;
-  const participantes = form.participantes.value.split(",").map(p => p.trim()).filter(p => p);
+  const participantes = form.participantes.value;
 
-  // coleta materiais e soma quantidades iguais
   const materialRows = document.querySelectorAll('.material-row');
   const materiaisMap = {};
   materialRows.forEach(row => {
@@ -209,14 +214,13 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     return;
   }
 
-  // coleta arquivos
+  const files = filesInput.files;
   const filesData = [];
-  for (const file of filesInput.files) {
+  for (const file of files) {
     const base64 = await fileToBase64(file);
     filesData.push({name: file.name, type: file.type, base64});
   }
 
-  // coleta mapa
   const mapImageBase64 = document.getElementById("mapImage").value;
   if(mapImageBase64) {
     filesData.push({
@@ -226,9 +230,8 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     });
   }
 
-  // envio via Apps Script
   try {
-    const res = await fetch(SPREADSHEET_WEBAPP, {
+    const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec', {
       method:'POST',
       body: JSON.stringify({responsavel, participantes, materiais, files: filesData})
     });
