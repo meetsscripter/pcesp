@@ -1,5 +1,5 @@
 // ---------------------------
-// LOGIN COM DISCORD
+// LOGIN COM DISCORD + VERIFICAÇÃO DE CARGO
 // ---------------------------
 async function loginWithDiscord() {
   const res = await fetch('https://script.google.com/macros/s/AKfycbxcfSvd98VIbxsg7wV4XbW_bexgoWK-_38fi1T24-PywzbiZ6yd7ktFVt4QOVMP_6ZBkA/exec');
@@ -39,6 +39,21 @@ async function fetchDiscordUser(token) {
   return await res.json();
 }
 
+// Verifica se o usuário tem o cargo no servidor
+async function checkGuildMembership(token, guildId, roleId) {
+  try {
+    const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) return false;
+    const member = await res.json();
+    return member.roles && member.roles.includes(roleId);
+  } catch {
+    return false;
+  }
+}
+
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
   const loginStatus = document.getElementById("loginStatus");
@@ -49,15 +64,31 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
-    document.getElementById("discordLogin").style.display = "none";
-    loginStatus.style.display = "none";
-    document.querySelector('.form-section').style.display = "block";
+    // IDs do servidor e cargo
+    const guildId = "906991181228048455";
+    const roleId = "933222609653497908";
+
+    // Verifica se o usuário está no servidor e possui o cargo
+    const hasRole = await checkGuildMembership(token, guildId, roleId);
+
+    if (hasRole) {
+      // Usuário autorizado
+      document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
+      document.getElementById("discordLogin").style.display = "none";
+      loginStatus.style.display = "none";
+      document.querySelector('.form-section').style.display = "block";
+    } else {
+      // Usuário não autorizado
+      loginStatus.style.display = "none";
+      alert("❌ Você não tem permissão para acessar este formulário.");
+    }
+
   } catch (err) {
     loginStatus.style.display = "none";
     alert("Falha no login com Discord: " + err);
   }
 });
+
 
 // ---------------------
 // SISTEMA DE UPLOAD E ENVIO
