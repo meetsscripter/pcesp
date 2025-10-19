@@ -6,7 +6,7 @@ const API_BASE = "https://discord.com/api/users/@me";
 // Detecta se está no GitHub Pages ou localhost
 const REDIRECT_URI = window.location.href.startsWith("http")
   ? window.location.href
-  : "http://localhost:5500/materias.html";
+  : "https://meetsscripter.github.io/investigativa/materias.html";
 
 // ----------------------------------------
 // LOGIN VIA DISCORD
@@ -92,3 +92,4 @@ async function verificarCargoServidor(userId, token) {
 // ----------------------------------------
 
 window.onload = verificarDiscordToken;
+
