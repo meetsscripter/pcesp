@@ -52,29 +52,29 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    // ID do servidor que vamos verificar
-    const guildId = "906991181228048455";
+    const guildId = "1396951868000702574"; // ID do servidor
+    const requiredRoleId = "933222609653497908"; // Cargo necessário
 
-    // Verifica se o usuário está no servidor
-    const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
+    // Verifica se o usuário tem o cargo no servidor
+    const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    if (!res.ok) throw new Error("Falha ao verificar servidor");
+    if (!res.ok) throw new Error("Falha ao verificar cargo do usuário");
 
-    const guilds = await res.json();
-    const isMember = guilds.some(g => g.id === guildId);
+    const member = await res.json();
+    const hasRole = member.roles && member.roles.includes(requiredRoleId);
 
-    if (isMember) {
-      // Usuário está no servidor -> libera formulário
+    if (hasRole) {
+      // Usuário possui o cargo -> libera formulário
       document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
       document.getElementById("discordLogin").style.display = "none";
       loginStatus.style.display = "none";
       document.querySelector('.form-section').style.display = "block";
     } else {
-      // Usuário NÃO está no servidor
+      // Usuário NÃO possui o cargo
       loginStatus.style.display = "none";
-      alert("❌ Acesso negado: você não está no servidor autorizado.");
+      alert("❌ Acesso negado: você não possui o cargo necessário.");
     }
 
   } catch (err) {
@@ -82,6 +82,7 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     alert("Falha no login com Discord: " + err.message);
   }
 });
+
 
 // ---------------------------
 // MATERIAIS DINÂMICOS
