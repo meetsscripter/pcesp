@@ -52,7 +52,7 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    const guildId = "1396951868000702574"; // ID do servidor
+    const guildId = "906991181228048455"; // ID do servidor
     const requiredRoleId = "933222609653497908"; // Cargo necessário
 
     // Verifica se o usuário tem o cargo no servidor
@@ -250,3 +250,4 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
