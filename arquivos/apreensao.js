@@ -1,5 +1,5 @@
 // ---------------------------
-// LOGIN COM DISCORD + VERIFICAÇÃO DE SERVIDOR
+// LOGIN COM DISCORD + VERIFICAÇÃO DE CARGO
 // ---------------------------
 async function loginWithDiscord() {
   const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec');
@@ -55,7 +55,7 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const guildId = "906991181228048455"; // ID do servidor
     const requiredRoleId = "933222609653497908"; // Cargo necessário
 
-    // Verifica se o usuário tem o cargo no servidor
+    // Verifica se o usuário possui o cargo
     const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -72,7 +72,6 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
       loginStatus.style.display = "none";
       document.querySelector('.form-section').style.display = "block";
     } else {
-      // Usuário NÃO possui o cargo
       loginStatus.style.display = "none";
       alert("❌ Acesso negado: você não possui o cargo necessário.");
     }
@@ -82,7 +81,6 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     alert("Falha no login com Discord: " + err.message);
   }
 });
-
 
 // ---------------------------
 // MATERIAIS DINÂMICOS
@@ -177,7 +175,6 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   btn.disabled = true;
   status.innerText = "⏳ Enviando...";
 
-  // validação do mapa
   const mapX = document.getElementById("mapX").value;
   const mapY = document.getElementById("mapY").value;
   if (!mapX || !mapY) {
@@ -250,4 +247,3 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
-
