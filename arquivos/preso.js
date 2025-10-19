@@ -65,7 +65,7 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
 
     // IDs do servidor e cargo
     const guildId = "1396951868000702574";
-    const roleId = "1405662614498836620";
+    const roleId = "1405666591668043808";
 
     const hasRole = await checkGuildMembership(token, guildId, roleId);
 
@@ -254,3 +254,4 @@ document.getElementById('prisonerForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
