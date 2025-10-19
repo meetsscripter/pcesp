@@ -1,5 +1,5 @@
 // ---------------------------
-// LOGIN COM DISCORD
+// LOGIN COM DISCORD + VERIFICAÇÃO DE CARGO
 // ---------------------------
 async function loginWithDiscord() {
   const res = await fetch('https://script.google.com/macros/s/AKfycbyMTezC06ST-HF5vPjz-KvoQdrR_wgf3pOkEIVDmx7fIZD5ywcxOqCO_g-5RYB4FJpORA/exec');
@@ -39,9 +39,20 @@ async function fetchDiscordUser(token) {
   return await res.json();
 }
 
-// ---------------------------
-// LOGIN
-// ---------------------------
+// Verifica se o usuário tem o cargo no servidor
+async function checkGuildMembership(token, guildId, roleId) {
+  try {
+    const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return false;
+    const member = await res.json();
+    return member.roles && member.roles.includes(roleId);
+  } catch {
+    return false;
+  }
+}
+
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
   const loginStatus = document.getElementById("loginStatus");
@@ -52,10 +63,22 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
-    document.getElementById("discordLogin").style.display = "none";
-    loginStatus.style.display = "none";
-    document.querySelector('.form-section').style.display = "block";
+    // IDs do servidor e cargo
+    const guildId = "1396951868000702574";
+    const roleId = "1405662614498836620";
+
+    const hasRole = await checkGuildMembership(token, guildId, roleId);
+
+    if (hasRole) {
+      document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
+      document.getElementById("discordLogin").style.display = "none";
+      loginStatus.style.display = "none";
+      document.querySelector('.form-section').style.display = "block";
+    } else {
+      loginStatus.style.display = "none";
+      alert("❌ Você não tem permissão para acessar este formulário.");
+    }
+
   } catch (err) {
     loginStatus.style.display = "none";
     alert("Falha no login com Discord: " + err);
@@ -141,16 +164,25 @@ const filesInput = document.getElementById('files');
 const mbStatus = document.getElementById('mbStatus');
 
 filesInput.addEventListener('change', () => {
-  if (!filesInput.files[0]) return;
-  const file = filesInput.files[0];
-  const sizeMB = (file.size/(1024*1024)).toFixed(2);
-  if (sizeMB > 10) {
-    alert("❌ Arquivo maior que 10MB!");
-    filesInput.value = "";
-    mbStatus.innerText = `Total: 0 MB / 10 MB`;
-    return;
+  let totalMB = 0;
+  for (const file of filesInput.files) totalMB += file.size / (1024*1024);
+  totalMB = Math.round(totalMB * 100) / 100;
+  mbStatus.innerText = `Total: ${totalMB} MB / 25 MB`;
+
+  for (const file of filesInput.files) {
+    if (file.size > 10*1024*1024) {
+      alert(`❌ Arquivo ${file.name} maior que 10MB!`);
+      filesInput.value = "";
+      mbStatus.innerText = `Total: 0 MB / 25 MB`;
+      return;
+    }
   }
-  mbStatus.innerText = `Total: ${sizeMB} MB / 10 MB`;
+
+  if (totalMB > 25) {
+    alert("❌ Total de arquivos ultrapassa 25MB!");
+    filesInput.value = "";
+    mbStatus.innerText = `Total: 0 MB / 25 MB`;
+  }
 });
 
 async function fileToBase64(file) {
@@ -174,11 +206,10 @@ document.getElementById('prisonerForm').addEventListener('submit', async e => {
   btn.disabled = true;
   status.innerText = "⏳ Enviando...";
 
-  const investigator = form.investigator.value; // responsável login
+  const investigator = form.investigator.value;
   const prisonerName = form.prisonerName.value;
   const prisonerCPF = form.prisonerCPF.value;
   const description = form.description.value;
-
   const articles = Array.from(form.querySelectorAll('input[name="articles"]:checked')).map(a => a.value);
 
   const filesData = [];
@@ -200,7 +231,7 @@ document.getElementById('prisonerForm').addEventListener('submit', async e => {
         prisonerCPF,
         description,
         articles,
-        responsibles: responsiblesList, // todos os integrantes
+        responsibles: responsiblesList,
         files: filesData
       })
     });
@@ -208,13 +239,10 @@ document.getElementById('prisonerForm').addEventListener('submit', async e => {
     const res = await response.json();
     if (res.status === 'ok') {
       status.innerText = "✅ Registro enviado com sucesso!";
-      
-      // preserva investigador
       const savedInvestigator = form.investigator.value;
       form.reset();
       form.investigator.value = savedInvestigator;
-
-      mbStatus.innerText = `Total: 0 MB / 10 MB`;
+      mbStatus.innerText = `Total: 0 MB / 25 MB`;
       responsiblesList = [];
       renderResponsibles();
     } else {
@@ -225,6 +253,4 @@ document.getElementById('prisonerForm').addEventListener('submit', async e => {
   } finally {
     btn.disabled = false;
   }
-
-  return false;
 });
