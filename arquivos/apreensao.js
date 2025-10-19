@@ -37,7 +37,7 @@ async function loginWithDiscord() {
 // VERIFICAÇÃO NO APPSCRIPT
 // ---------------------------
 async function verifyAccessWithAppScript(token) {
-  const url = `https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec?token=${token}`;
+  const url = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify%20guilds`;
   const res = await fetch(url);
   const data = await res.json();
   return data;
@@ -236,3 +236,4 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
