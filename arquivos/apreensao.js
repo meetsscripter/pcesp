@@ -1,6 +1,8 @@
 // ---------------------------
-// LOGIN COM DISCORD + VERIFICAÇÃO DE CARGO
+// LOGIN COM DISCORD (verifica se está no servidor)
 // ---------------------------
+const SERVER_ID = "906991181228048455"; // ID do servidor que deve pertencer
+
 async function loginWithDiscord() {
   const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec');
   const data = await res.json();
@@ -39,23 +41,19 @@ async function fetchDiscordUser(token) {
   return await res.json();
 }
 
-// Função para verificar cargo
-async function checkGuildMembership(token, guildId, roleId) {
+async function checkGuildMembership(token, guildId) {
   try {
-    const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
+    const res = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) return false;
-    const member = await res.json();
-    return member.roles && member.roles.includes(roleId);
+    const guilds = await res.json();
+    return guilds.some(g => g.id === guildId);
   } catch {
     return false;
   }
 }
 
-// ---------------------------
-// LOGIN BOTÃO
-// ---------------------------
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
   const loginStatus = document.getElementById("loginStatus");
@@ -66,21 +64,16 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    // IDs do servidor e cargo
-    const guildId = "1396951868000702574";
-    const roleId = "1405666591668043808";
+    const inGuild = await checkGuildMembership(token, SERVER_ID);
 
-    const hasRole = await checkGuildMembership(token, guildId, roleId);
-
-    if (hasRole) {
-      // Mantendo lógica antiga
+    if (inGuild) {
       document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
       document.getElementById("discordLogin").style.display = "none";
       loginStatus.style.display = "none";
       document.querySelector('.form-section').style.display = "block";
     } else {
       loginStatus.style.display = "none";
-      alert("❌ Você não tem permissão para acessar este formulário.");
+      alert("❌ Você não faz parte do servidor autorizado.");
     }
 
   } catch (err) {
@@ -174,9 +167,6 @@ async function fileToBase64(file) {
 // ---------------------------
 // ENVIO DO FORMULÁRIO
 // ---------------------------
-// ---------------------------
-// ENVIO DO FORMULÁRIO
-// ---------------------------
 document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   e.preventDefault();
   const form = e.target;
@@ -188,19 +178,14 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   // validação do mapa
   const mapX = document.getElementById("mapX").value;
   const mapY = document.getElementById("mapY").value;
-  if (!mapX || !mapY) {
+  if(!mapX || !mapY) {
     status.innerText = "❌ Selecione o local no mapa antes de enviar!";
     btn.disabled = false;
     return;
   }
 
   const responsavel = form.responsavel.value;
-
-  // transforma participantes em array, separando por vírgula, caso seja string
-  let participantes = form.participantes.value;
-  if (typeof participantes === 'string') {
-    participantes = participantes.split(',').map(p => p.trim()).filter(p => p);
-  }
+  const participantes = form.participantes.value.split(",").map(p => p.trim()).filter(Boolean);
 
   // coleta materiais e soma quantidades iguais
   const materialRows = document.querySelectorAll('.material-row');
@@ -208,13 +193,13 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   materialRows.forEach(row => {
     const name = row.querySelector('.material-name').value;
     const qty = parseInt(row.querySelector('.material-qty').value) || 0;
-    if (name && qty) {
-      if (!materiaisMap[name]) materiaisMap[name] = 0;
+    if(name && qty) {
+      if(!materiaisMap[name]) materiaisMap[name] = 0;
       materiaisMap[name] += qty;
     }
   });
   const materiais = Object.entries(materiaisMap).map(([name, qty]) => ({ name, qty }));
-  if (materiais.length === 0) {
+  if(materiais.length===0) {
     status.innerText = "❌ Adicione pelo menos um material";
     btn.disabled = false;
     return;
@@ -225,12 +210,12 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   const filesData = [];
   for (const file of files) {
     const base64 = await fileToBase64(file);
-    filesData.push({ name: file.name, type: file.type, base64 });
+    filesData.push({name: file.name, type: file.type, base64});
   }
 
   // coleta mapa
   const mapImageBase64 = document.getElementById("mapImage").value;
-  if (mapImageBase64) {
+  if(mapImageBase64) {
     filesData.push({
       name: "mapa_marcado.png",
       type: "image/png",
@@ -241,11 +226,11 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   // envio via Apps Script
   try {
     const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec', {
-      method: 'POST',
-      body: JSON.stringify({ responsavel, participantes, materiais, files: filesData })
+      method:'POST',
+      body: JSON.stringify({responsavel, participantes, materiais, files: filesData})
     });
     const result = await res.json();
-    if (result.status === 'ok') {
+    if(result.status==='ok') {
       status.innerText = `✅ Apreensões enviadas!`;
       materiaisContainer.innerHTML = "";
       form.participantes.value = "";
@@ -257,12 +242,9 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     } else {
       status.innerText = `❌ ${result.message || JSON.stringify(result)}`;
     }
-  } catch (err) {
+  } catch(err) {
     status.innerText = `❌ Falha na comunicação: ${err.message}`;
   } finally {
     btn.disabled = false;
   }
 });
-
-
-
