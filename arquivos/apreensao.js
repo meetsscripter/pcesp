@@ -1,13 +1,5 @@
 // ---------------------------
-// CONFIGURAÇÃO
-// ---------------------------
-
-const CLIENT_ID = "996904470069911623";
-const REDIRECT_URI = "https://meetsscripter.github.io/investigativa/materias.html";
-const REQUIRED_TAG = "933222609653497908"; // tag necessária para liberar
-
-// ---------------------------
-// LOGIN COM DISCORD
+// LOGIN COM DISCORD + VERIFICAÇÃO DE CARGO VIA APPSCRIPT
 // ---------------------------
 
 async function loginWithDiscord() {
@@ -41,48 +33,43 @@ async function loginWithDiscord() {
   });
 }
 
-async function fetchDiscordUser(token) {
-  const res = await fetch("https://discord.com/api/users/@me", {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return await res.json();
-}
-
-// Pega guilds do usuário
-async function fetchUserGuilds(token) {
-  const res = await fetch("https://discord.com/api/users/@me/guilds", {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return await res.json();
+// ---------------------------
+// VERIFICAÇÃO NO APPSCRIPT
+// ---------------------------
+async function verifyAccessWithAppScript(token) {
+  const url = `https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec?token=${token}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data;
 }
 
 // ---------------------------
-// LOGIN E VERIFICAÇÃO
+// LOGIN BOTÃO
 // ---------------------------
-
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
   const loginStatus = document.getElementById("loginStatus");
-  loginStatus.innerHTML = "<strong>⏳ Aguarde o carregamento...</strong>";
+  loginStatus.innerHTML = "<strong>⏳ Autenticando com Discord...</strong>";
   loginStatus.style.display = "block";
 
   try {
     const token = await loginWithDiscord();
-    const user = await fetchDiscordUser(token);
-    const guilds = await fetchUserGuilds(token);
+    loginStatus.innerHTML = "<strong>🔍 Verificando permissões...</strong>";
 
-    // verifica se está em algum servidor com a tag necessária
-    const hasRequiredTag = guilds.some(g => g.id === REQUIRED_TAG);
-
-    if (hasRequiredTag) {
-      document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
-      document.getElementById("discordLogin").style.display = "none";
+    const verify = await verifyAccessWithAppScript(token);
+    if (verify.status !== "ok") {
       loginStatus.style.display = "none";
-      document.querySelector('.form-section').style.display = "block";
-    } else {
-      loginStatus.style.display = "none";
-      alert("❌ Você não tem permissão para acessar este formulário.");
+      alert(`❌ Acesso negado: ${verify.message}`);
+      return;
     }
+
+    const user = verify.user;
+    document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
+
+    // Exibe o formulário
+    document.getElementById("discordLogin").style.display = "none";
+    loginStatus.style.display = "none";
+    document.querySelector('.form-section').style.display = "block";
 
   } catch (err) {
     loginStatus.style.display = "none";
@@ -93,7 +80,6 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
 // ---------------------------
 // MATERIAIS DINÂMICOS
 // ---------------------------
-
 const materiaisContainer = document.getElementById('materiaisContainer');
 const addMaterialBtn = document.getElementById('addMaterial');
 
@@ -127,20 +113,14 @@ function createMaterialRow(name="", qty="") {
   materiaisContainer.appendChild(div);
 
   div.querySelector('.material-name').value = name;
-
-  div.querySelector('.removeMaterial').addEventListener('click', () => {
-    div.remove();
-  });
+  div.querySelector('.removeMaterial').addEventListener('click', () => div.remove());
 }
 
-addMaterialBtn.addEventListener('click', () => {
-  createMaterialRow();
-});
+addMaterialBtn.addEventListener('click', () => createMaterialRow());
 
 // ---------------------------
-// UPLOAD DE ARQUIVOS
+// ARQUIVOS
 // ---------------------------
-
 const filesInput = document.getElementById('files');
 const mbStatus = document.getElementById('mbStatus');
 
@@ -177,7 +157,6 @@ async function fileToBase64(file) {
 // ---------------------------
 // ENVIO DO FORMULÁRIO
 // ---------------------------
-
 document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   e.preventDefault();
   const form = e.target;
@@ -188,27 +167,30 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
 
   const mapX = document.getElementById("mapX").value;
   const mapY = document.getElementById("mapY").value;
-  if(!mapX || !mapY) {
+  if (!mapX || !mapY) {
     status.innerText = "❌ Selecione o local no mapa antes de enviar!";
     btn.disabled = false;
     return;
   }
 
   const responsavel = form.responsavel.value;
-  const participantes = form.participantes.value;
+  let participantes = form.participantes.value;
+  if (typeof participantes === 'string') {
+    participantes = participantes.split(',').map(p => p.trim()).filter(p => p);
+  }
 
   const materialRows = document.querySelectorAll('.material-row');
   const materiaisMap = {};
   materialRows.forEach(row => {
     const name = row.querySelector('.material-name').value;
     const qty = parseInt(row.querySelector('.material-qty').value) || 0;
-    if(name && qty) {
-      if(!materiaisMap[name]) materiaisMap[name] = 0;
+    if (name && qty) {
+      if (!materiaisMap[name]) materiaisMap[name] = 0;
       materiaisMap[name] += qty;
     }
   });
   const materiais = Object.entries(materiaisMap).map(([name, qty]) => ({ name, qty }));
-  if(materiais.length===0) {
+  if (materiais.length === 0) {
     status.innerText = "❌ Adicione pelo menos um material";
     btn.disabled = false;
     return;
@@ -218,11 +200,11 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   const filesData = [];
   for (const file of files) {
     const base64 = await fileToBase64(file);
-    filesData.push({name: file.name, type: file.type, base64});
+    filesData.push({ name: file.name, type: file.type, base64 });
   }
 
   const mapImageBase64 = document.getElementById("mapImage").value;
-  if(mapImageBase64) {
+  if (mapImageBase64) {
     filesData.push({
       name: "mapa_marcado.png",
       type: "image/png",
@@ -232,11 +214,11 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
 
   try {
     const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec', {
-      method:'POST',
-      body: JSON.stringify({responsavel, participantes, materiais, files: filesData})
+      method: 'POST',
+      body: JSON.stringify({ responsavel, participantes, materiais, files: filesData })
     });
     const result = await res.json();
-    if(result.status==='ok') {
+    if (result.status === 'ok') {
       status.innerText = `✅ Apreensões enviadas!`;
       materiaisContainer.innerHTML = "";
       form.participantes.value = "";
@@ -248,7 +230,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     } else {
       status.innerText = `❌ ${result.message || JSON.stringify(result)}`;
     }
-  } catch(err) {
+  } catch (err) {
     status.innerText = `❌ Falha na comunicação: ${err.message}`;
   } finally {
     btn.disabled = false;
