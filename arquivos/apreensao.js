@@ -1,5 +1,5 @@
 // ---------------------------
-// LOGIN COM DISCORD + VERIFICAÇÃO DE CARGO
+// LOGIN COM DISCORD + VERIFICAÇÃO DE SERVIDOR
 // ---------------------------
 async function loginWithDiscord() {
   const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec');
@@ -52,28 +52,22 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    const guildId = "906991181228048455"; // ID do servidor
-    const requiredRoleId = "933222609653497908"; // Cargo necessário
-
-    // Verifica se o usuário possui o cargo
-    const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
-      headers: { Authorization: `Bearer ${token}` }
+    // Envia ID do usuário para AppScript verificar cargo via bot
+    const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec', {
+      method: 'POST',
+      body: JSON.stringify({ userId: user.id })
     });
+    const result = await res.json();
 
-    if (!res.ok) throw new Error("Falha ao verificar cargo do usuário");
-
-    const member = await res.json();
-    const hasRole = member.roles && member.roles.includes(requiredRoleId);
-
-    if (hasRole) {
-      // Usuário possui o cargo -> libera formulário
+    if (result.status === "ok") {
+      // Usuário autorizado
       document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
       document.getElementById("discordLogin").style.display = "none";
       loginStatus.style.display = "none";
       document.querySelector('.form-section').style.display = "block";
     } else {
       loginStatus.style.display = "none";
-      alert("❌ Acesso negado: você não possui o cargo necessário.");
+      alert("❌ " + result.message);
     }
 
   } catch (err) {
@@ -81,6 +75,8 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     alert("Falha no login com Discord: " + err.message);
   }
 });
+
+
 
 // ---------------------------
 // MATERIAIS DINÂMICOS
@@ -175,6 +171,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   btn.disabled = true;
   status.innerText = "⏳ Enviando...";
 
+  // validação do mapa
   const mapX = document.getElementById("mapX").value;
   const mapY = document.getElementById("mapY").value;
   if (!mapX || !mapY) {
