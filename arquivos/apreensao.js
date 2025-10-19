@@ -1,95 +1,251 @@
-// IDs fixos
-const GUILD_ID = "1396951868000702574";
-const ROLE_ID = "1405666591668043808";
-const API_BASE = "https://discord.com/api/users/@me";
+// ---------------------------
+// LOGIN COM DISCORD + VERIFICAÇÃO DE SERVIDOR
+// ---------------------------
+async function loginWithDiscord() {
+  const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec');
+  const data = await res.json();
+  const url = data.url;
 
-// Detecta se está no GitHub Pages ou localhost
-const REDIRECT_URI = window.location.href.startsWith("http")
-  ? window.location.href
-  : "https://meetsscripter.github.io/investigativa/materias.html";
+  const width = 500, height = 700;
+  const left = (screen.width - width) / 2;
+  const top = (screen.height - height) / 2;
+  const popup = window.open(url, "DiscordLogin", `width=${width},height=${height},top=${top},left=${left}`);
 
-// ----------------------------------------
-// LOGIN VIA DISCORD
-// ----------------------------------------
-
-async function loginDiscord() {
-  try {
-    const res = await fetch(
-      "https://script.google.com/macros/s/AKfycbyEQIo5z5cdRSP5tL1riLRTWv4rSM6nVvBF4SxZfhsek-kqANJQOLVbI12D-diY5X3B-A/exec"
-    );
-    const data = await res.json();
-    window.location.href = data.url;
-  } catch (e) {
-    alert("Erro ao iniciar login via Discord.");
-  }
+  return new Promise((resolve, reject) => {
+    const interval = setInterval(() => {
+      try {
+        if (!popup || popup.closed) {
+          clearInterval(interval);
+          reject("Login cancelado ou popup fechado");
+        }
+        const hash = popup.location.hash;
+        if (hash) {
+          clearInterval(interval);
+          const params = new URLSearchParams(hash.substring(1));
+          const token = params.get("access_token");
+          popup.close();
+          if (token) resolve(token);
+          else reject("Token não encontrado");
+        }
+      } catch {}
+    }, 500);
+  });
 }
 
-// ----------------------------------------
-// VERIFICAÇÃO DE USUÁRIO E CARGO
-// ----------------------------------------
+async function fetchDiscordUser(token) {
+  const res = await fetch("https://discord.com/api/users/@me", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return await res.json();
+}
 
-async function verificarDiscordToken() {
-  const hash = window.location.hash.substring(1);
-  const params = new URLSearchParams(hash);
-  const token = params.get("access_token");
-
-  if (!token) return;
+// ---------------------------
+// LOGIN BOTÃO
+// ---------------------------
+document.getElementById("discordLogin").addEventListener("click", async e => {
+  e.preventDefault();
+  const loginStatus = document.getElementById("loginStatus");
+  loginStatus.innerHTML = "<strong>⏳ Aguarde o carregamento...</strong>";
+  loginStatus.style.display = "block";
 
   try {
-    // Pega informações do usuário
-    const userInfo = await fetch(API_BASE, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then((r) => r.json());
+    const token = await loginWithDiscord();
+    const user = await fetchDiscordUser(token);
 
-    // Pega lista de servidores
-    const guilds = await fetch(`${API_BASE}/guilds`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then((r) => r.json());
+    // ID do servidor que vamos verificar
+    const guildId = "906991181228048455";
 
-    const guild = guilds.find((g) => g.id === GUILD_ID);
-    if (!guild) {
-      alert("❌ Você não está no servidor autorizado.");
-      return;
+    // Verifica se o usuário está no servidor
+    const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) throw new Error("Falha ao verificar servidor");
+
+    const guilds = await res.json();
+    const isMember = guilds.some(g => g.id === guildId);
+
+    if (isMember) {
+      // Usuário está no servidor -> libera formulário
+      document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
+      document.getElementById("discordLogin").style.display = "none";
+      loginStatus.style.display = "none";
+      document.querySelector('.form-section').style.display = "block";
+    } else {
+      // Usuário NÃO está no servidor
+      loginStatus.style.display = "none";
+      alert("❌ Acesso negado: você não está no servidor autorizado.");
     }
-
-    // Verifica cargo (precisa de endpoint do bot)
-    const hasRole = await verificarCargoServidor(userInfo.id, token);
-    if (!hasRole) {
-      alert("🚫 Você não possui a tag necessária para acessar.");
-      return;
-    }
-
-    document.querySelector("#responsavel").value = `<@${userInfo.id}>`;
-    document.querySelector("#loginSection").style.display = "none";
-    document.querySelector("#formSection").style.display = "block";
 
   } catch (err) {
-    console.error(err);
-    alert("Erro ao verificar permissões do Discord.");
+    loginStatus.style.display = "none";
+    alert("Falha no login com Discord: " + err.message);
   }
+});
+
+// ---------------------------
+// MATERIAIS DINÂMICOS
+// ---------------------------
+const materiaisContainer = document.getElementById('materiaisContainer');
+const addMaterialBtn = document.getElementById('addMaterial');
+
+function createMaterialRow(name="", qty="") {
+  const div = document.createElement('div');
+  div.classList.add('material-row');
+  div.style.marginBottom = "8px";
+  div.innerHTML = `
+    <select class="material-name">
+      <option value="">Selecione</option>
+      <option value="Canabis">Canabis</option>
+      <option value="Colete">Colete</option>
+      <option value="762">762</option>
+      <option value="Maconha">Maconha</option>
+      <option value="Dinheiro Sujo">Dinheiro Sujo</option>
+      <option value="Metafetamina">Metafetamina</option>
+      <option value="Kevlar">Kevlar</option>
+      <option value="Lockpick">Lockpick</option>
+      <option value="Peça de arma">Peça de arma</option>
+      <option value="AK47">AK47</option>
+      <option value="Glock">Glock</option>
+      <option value="Thompson">Thompson</option>
+      <option value="UMP">UMP</option>
+      <option value="Zip Lock">Zip Lock</option>
+      <option value="Sementes de Marijuana">Sementes de Marijuana</option>
+      <option value="Fenilacetona">Fenilacetona</option>
+    </select>
+    <input type="number" class="material-qty" placeholder="Valor" min="1" value="${qty}" style="width:80px;margin-left:5px;" />
+    <button type="button" class="removeMaterial">❌</button>
+  `;
+  materiaisContainer.appendChild(div);
+
+  div.querySelector('.material-name').value = name;
+
+  div.querySelector('.removeMaterial').addEventListener('click', () => {
+    div.remove();
+  });
 }
 
-async function verificarCargoServidor(userId, token) {
-  // ⚠️ Aqui você precisa usar um BOT TOKEN no backend (AppScript)
-  // pois o token do usuário não tem acesso a `/guilds/:id/members/:id`
+addMaterialBtn.addEventListener('click', () => {
+  createMaterialRow();
+});
+
+// ---------------------------
+// ARQUIVOS
+// ---------------------------
+const filesInput = document.getElementById('files');
+const mbStatus = document.getElementById('mbStatus');
+
+filesInput.addEventListener('change', () => {
+  let totalMB = 0;
+  for (const file of filesInput.files) {
+    totalMB += file.size / (1024*1024);
+    if (file.size > 10*1024*1024) {
+      alert(`❌ Arquivo ${file.name} maior que 10MB!`);
+      filesInput.value = "";
+      mbStatus.innerText = `Total: 0 MB / 25 MB`;
+      return;
+    }
+  }
+  totalMB = Math.round(totalMB*100)/100;
+  if (totalMB > 25) {
+    alert("❌ Total de arquivos ultrapassa 25MB!");
+    filesInput.value = "";
+    mbStatus.innerText = `Total: 0 MB / 25 MB`;
+    return;
+  }
+  mbStatus.innerText = `Total: ${totalMB} MB / 25 MB`;
+});
+
+async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = err => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
+// ---------------------------
+// ENVIO DO FORMULÁRIO
+// ---------------------------
+document.getElementById('apreensaoForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form = e.target;
+  const status = document.getElementById('status');
+  const btn = form.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  status.innerText = "⏳ Enviando...";
+
+  // validação do mapa
+  const mapX = document.getElementById("mapX").value;
+  const mapY = document.getElementById("mapY").value;
+  if (!mapX || !mapY) {
+    status.innerText = "❌ Selecione o local no mapa antes de enviar!";
+    btn.disabled = false;
+    return;
+  }
+
+  const responsavel = form.responsavel.value;
+
+  let participantes = form.participantes.value;
+  if (typeof participantes === 'string') {
+    participantes = participantes.split(',').map(p => p.trim()).filter(p => p);
+  }
+
+  const materialRows = document.querySelectorAll('.material-row');
+  const materiaisMap = {};
+  materialRows.forEach(row => {
+    const name = row.querySelector('.material-name').value;
+    const qty = parseInt(row.querySelector('.material-qty').value) || 0;
+    if (name && qty) {
+      if (!materiaisMap[name]) materiaisMap[name] = 0;
+      materiaisMap[name] += qty;
+    }
+  });
+  const materiais = Object.entries(materiaisMap).map(([name, qty]) => ({ name, qty }));
+  if (materiais.length === 0) {
+    status.innerText = "❌ Adicione pelo menos um material";
+    btn.disabled = false;
+    return;
+  }
+
+  const files = filesInput.files;
+  const filesData = [];
+  for (const file of files) {
+    const base64 = await fileToBase64(file);
+    filesData.push({ name: file.name, type: file.type, base64 });
+  }
+
+  const mapImageBase64 = document.getElementById("mapImage").value;
+  if (mapImageBase64) {
+    filesData.push({
+      name: "mapa_marcado.png",
+      type: "image/png",
+      base64: mapImageBase64.split(',')[1]
+    });
+  }
+
   try {
-    const response = await fetch(
-      `https://discord.com/api/guilds/${GUILD_ID}/members/${userId}`,
-      {
-        headers: { Authorization: `Bot SEU_BOT_TOKEN_AQUI` },
-      }
-    );
-    if (!response.ok) return false;
-    const member = await response.json();
-    return member.roles.includes(ROLE_ID);
-  } catch {
-    return false;
+    const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec', {
+      method: 'POST',
+      body: JSON.stringify({ responsavel, participantes, materiais, files: filesData })
+    });
+    const result = await res.json();
+    if (result.status === 'ok') {
+      status.innerText = `✅ Apreensões enviadas!`;
+      materiaisContainer.innerHTML = "";
+      form.participantes.value = "";
+      filesInput.value = "";
+      document.getElementById("mapX").value = "";
+      document.getElementById("mapY").value = "";
+      document.getElementById("mapImage").value = "";
+      mbStatus.innerText = `Total: 0 MB / 25 MB`;
+    } else {
+      status.innerText = `❌ ${result.message || JSON.stringify(result)}`;
+    }
+  } catch (err) {
+    status.innerText = `❌ Falha na comunicação: ${err.message}`;
+  } finally {
+    btn.disabled = false;
   }
-}
-
-// ----------------------------------------
-// EXECUTA AUTOMATICAMENTE AO CARREGAR
-// ----------------------------------------
-
-window.onload = verificarDiscordToken;
-
+});
