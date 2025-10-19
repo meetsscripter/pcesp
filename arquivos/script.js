@@ -65,8 +65,8 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const user = await fetchDiscordUser(token);
 
     // IDs do servidor e cargo
-    const guildId = "906991181228048455";
-    const roleId = "933222609653497908";
+    const guildId = "1396951868000702574";
+    const roleId = "1405662614498836620";
 
     // Verifica se o usuário está no servidor e possui o cargo
     const hasRole = await checkGuildMembership(token, guildId, roleId);
@@ -206,3 +206,4 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
     btn.disabled = false;
   }
 });
+
