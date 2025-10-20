@@ -1,23 +1,22 @@
 // ---------------------------
-// LOGIN COM DISCORD + VERIFICAÇÃO DE PERMISSÃO
+// LOGIN COM DISCORD + VERIFICAÇÃO DE MEMBRO DO SERVIDOR
 // ---------------------------
 async function loginWithDiscord() {
-  // Abre popup de login
-  const urlRes = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec');
-  const data = await urlRes.json();
-  const loginUrl = data.url;
+  const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec');
+  const data = await res.json();
+  const url = data.url;
 
   const width = 500, height = 700;
   const left = (screen.width - width) / 2;
   const top = (screen.height - height) / 2;
-  const popup = window.open(loginUrl, "DiscordLogin", `width=${width},height=${height},top=${top},left=${left}`);
+  const popup = window.open(url, "DiscordLogin", `width=${width},height=${height},top=${top},left=${left}`);
 
   return new Promise((resolve, reject) => {
-    const interval = setInterval(async () => {
+    const interval = setInterval(() => {
       try {
-        if (!popup || popup.closed) { 
-          clearInterval(interval); 
-          reject("Login cancelado ou popup fechado"); 
+        if (!popup || popup.closed) {
+          clearInterval(interval);
+          reject("Login cancelado ou popup fechado");
         }
         const hash = popup.location.hash;
         if (hash) {
@@ -25,20 +24,38 @@ async function loginWithDiscord() {
           const params = new URLSearchParams(hash.substring(1));
           const token = params.get("access_token");
           popup.close();
-          if (!token) reject("Token não encontrado");
-
-          // Verifica permissão no Apps Script
-          const res = await fetch(`https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec?token=${token}`);
-          const result = await res.json();
-          if (result.status === "ok") resolve(result);
-          else reject(result.message);
+          if (token) resolve(token);
+          else reject("Token não encontrado");
         }
       } catch {}
     }, 500);
   });
 }
 
-// Botão de login
+async function fetchDiscordUser(token) {
+  const res = await fetch("https://discord.com/api/users/@me", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return await res.json();
+}
+
+// Verifica se usuário está no servidor permitido
+async function checkGuildMembership(token, guildId) {
+  try {
+    const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return false;
+    const guilds = await res.json();
+    return guilds.some(g => g.id === guildId);
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------
+// LOGIN BOTÃO
+// ---------------------------
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
   const loginStatus = document.getElementById("loginStatus");
@@ -46,14 +63,26 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
   loginStatus.style.display = "block";
 
   try {
-    const user = await loginWithDiscord();
-    document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
-    document.getElementById("discordLogin").style.display = "none";
-    loginStatus.style.display = "none";
-    document.querySelector('.form-section').style.display = "block";
+    const token = await loginWithDiscord();
+    const user = await fetchDiscordUser(token);
+
+    const guildId = "1396951868000702574"; // Servidor permitido
+    const isMember = await checkGuildMembership(token, guildId);
+
+    if (isMember) {
+      // Mantendo lógica antiga
+      document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
+      document.getElementById("discordLogin").style.display = "none";
+      loginStatus.style.display = "none";
+      document.querySelector('.form-section').style.display = "block";
+    } else {
+      loginStatus.style.display = "none";
+      alert("❌ Você não está no servidor permitido e não pode acessar este formulário.");
+    }
+
   } catch (err) {
     loginStatus.style.display = "none";
-    alert("❌ " + err);
+    alert("Falha no login com Discord: " + err);
   }
 });
 
@@ -161,7 +190,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
 
   const responsavel = form.responsavel.value;
 
-  // transforma participantes em array
+  // transforma participantes em array, separando por vírgula, caso seja string
   let participantes = form.participantes.value;
   if (typeof participantes === 'string') {
     participantes = participantes.split(',').map(p => p.trim()).filter(p => p);
