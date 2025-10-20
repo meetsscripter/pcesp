@@ -41,18 +41,23 @@ async function fetchDiscordUser(token) {
 }
 
 // Verifica se o usuário está no servidor
+// Verifica se usuário está no servidor permitido
 async function checkGuildMembership(token, guildId) {
   try {
-    const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
+    const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    return res.ok; // true se estiver no servidor, false se não
+    if (!res.ok) return false;
+    const guilds = await res.json();
+    return guilds.some(g => g.id === guildId);
   } catch {
     return false;
   }
 }
 
-
+// ---------------------------
+// LOGIN BOTÃO
+// ---------------------------
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
   const loginStatus = document.getElementById("loginStatus");
@@ -63,23 +68,19 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    // ID do servidor permitido
-    const allowedGuildId = "1396951868000702574";
+    const guildId = "1396951868000702574"; // Servidor permitido
+    const isMember = await checkGuildMembership(token, guildId);
 
-    // Verifica se o usuário está no servidor
-    const isInGuild = await checkGuildMembership(token, allowedGuildId);
-
-    if (!isInGuild) {
+    if (isMember) {
+      // Mantendo lógica antiga
+      document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
+      document.getElementById("discordLogin").style.display = "none";
+      loginStatus.style.display = "none";
+      document.querySelector('.form-section').style.display = "block";
+    } else {
       loginStatus.style.display = "none";
       alert("❌ Você não está no servidor permitido e não pode acessar este formulário.");
-      return;
     }
-
-    // Usuário autorizado
-    document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
-    document.getElementById("discordLogin").style.display = "none";
-    loginStatus.style.display = "none";
-    document.querySelector('.form-section').style.display = "block";
 
   } catch (err) {
     loginStatus.style.display = "none";
@@ -203,4 +204,5 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
     btn.disabled = false;
   }
 });
+
 
