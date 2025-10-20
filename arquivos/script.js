@@ -39,23 +39,21 @@ async function fetchDiscordUser(token) {
   return await res.json();
 }
 
-// Verifica se usuário está no servidor permitido
-async function checkGuildMembership(token, guildId) {
+// Verifica se o usuário tem o cargo no servidor
+async function checkGuildMembership(token, guildId, roleId) {
   try {
-    const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
+    const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+
     if (!res.ok) return false;
-    const guilds = await res.json();
-    return guilds.some(g => g.id === guildId);
+    const member = await res.json();
+    return member.roles && member.roles.includes(roleId);
   } catch {
     return false;
   }
 }
 
-// ---------------------------
-// LOGIN BOTÃO
-// ---------------------------
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
   const loginStatus = document.getElementById("loginStatus");
@@ -203,10 +201,3 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
     btn.disabled = false;
   }
 });
-
-
-
-
-
-
-
