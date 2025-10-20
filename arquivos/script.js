@@ -1,8 +1,8 @@
 // ---------------------------
-// LOGIN COM DISCORD + VERIFICAÇÃO DE CARGO
+// LOGIN COM DISCORD + VERIFICAÇÃO DE MEMBRO DO SERVIDOR
 // ---------------------------
 async function loginWithDiscord() {
-  const res = await fetch('https://script.google.com/macros/s/AKfycbxcfSvd98VIbxsg7wV4XbW_bexgoWK-_38fi1T24-PywzbiZ6yd7ktFVt4QOVMP_6ZBkA/exec');
+  const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec');
   const data = await res.json();
   const url = data.url;
 
@@ -39,7 +39,7 @@ async function fetchDiscordUser(token) {
   return await res.json();
 }
 
-// Verifica se o usuário tem o cargo no servidor
+// Verifica se usuário está no servidor permitido
 async function checkGuildMembership(token, guildId) {
   try {
     const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
@@ -56,6 +56,8 @@ async function checkGuildMembership(token, guildId) {
 // ---------------------------
 // LOGIN BOTÃO
 // ---------------------------
+// --- substitua o listener existente por este bloco ---
+
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
   const loginStatus = document.getElementById("loginStatus");
@@ -66,19 +68,25 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    const guildId = "1396951868000702574"; // Servidor permitido
-    const isMember = await checkGuildMembership(token, guildId);
+    // ID do servidor que você quer verificar (alterado conforme pedido)
+    const requiredGuildId = "1396951868000702574";
+    // se você quiser também verificar cargo, mantenha roleId — senão pode omitir
+    const roleId = "1405662614498836620"; // opcional, remova se não quiser checar cargo
 
-    if (isMember) {
-      // Mantendo lógica antiga
-      document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
-      document.getElementById("discordLogin").style.display = "none";
-      loginStatus.style.display = "none";
-      document.querySelector('.form-section').style.display = "block";
-    } else {
+    // Verifica se o usuário está no servidor requerido
+    const isInGuild = await checkGuildMembership(token, requiredGuildId, roleId);
+
+    if (!isInGuild) {
       loginStatus.style.display = "none";
       alert("❌ Você não está no servidor permitido e não pode acessar este formulário.");
+      return;
     }
+
+    // Usuário está no servidor — continua como antes
+    document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
+    document.getElementById("discordLogin").style.display = "none";
+    loginStatus.style.display = "none";
+    document.querySelector('.form-section').style.display = "block";
 
   } catch (err) {
     loginStatus.style.display = "none";
@@ -87,20 +95,62 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
 });
 
 
-// ---------------------
-// SISTEMA DE UPLOAD E ENVIO
-// ---------------------
+// ---------------------------
+// MATERIAIS DINÂMICOS
+// ---------------------------
+const materiaisContainer = document.getElementById('materiaisContainer');
+const addMaterialBtn = document.getElementById('addMaterial');
 
+function createMaterialRow(name="", qty="") {
+  const div = document.createElement('div');
+  div.classList.add('material-row');
+  div.style.marginBottom = "8px";
+  div.innerHTML = `
+    <select class="material-name">
+      <option value="">Selecione</option>
+      <option value="Canabis">Canabis</option>
+      <option value="Colete">Colete</option>
+      <option value="762">762</option>
+      <option value="Maconha">Maconha</option>
+      <option value="Dinheiro Sujo">Dinheiro Sujo</option>
+      <option value="Metafetamina">Metafetamina</option>
+      <option value="Kevlar">Kevlar</option>
+      <option value="Lockpick">Lockpick</option>
+      <option value="Peça de arma">Peça de arma</option>
+      <option value="AK47">AK47</option>
+      <option value="Glock">Glock</option>
+      <option value="Thompson">Thompson</option>
+      <option value="UMP">UMP</option>
+      <option value="Zip Lock">Zip Lock</option>
+      <option value="Sementes de Marijuana">Sementes de Marijuana</option>
+      <option value="Fenilacetona">Fenilacetona</option>
+    </select>
+    <input type="number" class="material-qty" placeholder="Valor" min="1" value="${qty}" style="width:80px;margin-left:5px;" />
+    <button type="button" class="removeMaterial">❌</button>
+  `;
+  materiaisContainer.appendChild(div);
+
+  div.querySelector('.material-name').value = name;
+
+  div.querySelector('.removeMaterial').addEventListener('click', () => {
+    div.remove();
+  });
+}
+
+addMaterialBtn.addEventListener('click', () => {
+  createMaterialRow();
+});
+
+// ---------------------------
+// ARQUIVOS
+// ---------------------------
 const filesInput = document.getElementById('files');
 const mbStatus = document.getElementById('mbStatus');
 
 filesInput.addEventListener('change', () => {
   let totalMB = 0;
-  for (const file of filesInput.files) totalMB += file.size / (1024*1024);
-  totalMB = Math.round(totalMB * 100) / 100;
-  mbStatus.innerText = `Total: ${totalMB} MB / 25 MB`;
-
   for (const file of filesInput.files) {
+    totalMB += file.size / (1024*1024);
     if (file.size > 10*1024*1024) {
       alert(`❌ Arquivo ${file.name} maior que 10MB!`);
       filesInput.value = "";
@@ -108,97 +158,110 @@ filesInput.addEventListener('change', () => {
       return;
     }
   }
-
+  totalMB = Math.round(totalMB*100)/100;
   if (totalMB > 25) {
     alert("❌ Total de arquivos ultrapassa 25MB!");
     filesInput.value = "";
     mbStatus.innerText = `Total: 0 MB / 25 MB`;
+    return;
   }
+  mbStatus.innerText = `Total: ${totalMB} MB / 25 MB`;
 });
 
 async function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = error => reject(error);
+    reader.onerror = err => reject(err);
     reader.readAsDataURL(file);
   });
 }
 
-// ---------------------
-// FORMULÁRIO DE ENVIO
-// ---------------------
-
-document.getElementById('investigationForm').addEventListener('submit', async e => {
+// ---------------------------
+// ENVIO DO FORMULÁRIO
+// ---------------------------
+document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   e.preventDefault();
   const form = e.target;
   const status = document.getElementById('status');
   const btn = form.querySelector('button[type="submit"]');
-
   btn.disabled = true;
   status.innerText = "⏳ Enviando...";
 
-  const investigator = form.investigator.value;
-  const summary = form.summary.value;
-  const observations = form.observations.value;
-  const crimeType = form.crimeType.value || "Não especificado";
-  const crimeCase = form.crimeCase.value || "N/A";
-
-  const files = filesInput.files;
-  if (files.length > 10) {
-    status.innerText = "❌ Máximo 10 arquivos";
+  // validação do mapa
+  const mapX = document.getElementById("mapX").value;
+  const mapY = document.getElementById("mapY").value;
+  if (!mapX || !mapY) {
+    status.innerText = "❌ Selecione o local no mapa antes de enviar!";
     btn.disabled = false;
     return;
   }
 
+  const responsavel = form.responsavel.value;
+
+  // transforma participantes em array, separando por vírgula, caso seja string
+  let participantes = form.participantes.value;
+  if (typeof participantes === 'string') {
+    participantes = participantes.split(',').map(p => p.trim()).filter(p => p);
+  }
+
+  // coleta materiais e soma quantidades iguais
+  const materialRows = document.querySelectorAll('.material-row');
+  const materiaisMap = {};
+  materialRows.forEach(row => {
+    const name = row.querySelector('.material-name').value;
+    const qty = parseInt(row.querySelector('.material-qty').value) || 0;
+    if (name && qty) {
+      if (!materiaisMap[name]) materiaisMap[name] = 0;
+      materiaisMap[name] += qty;
+    }
+  });
+  const materiais = Object.entries(materiaisMap).map(([name, qty]) => ({ name, qty }));
+  if (materiais.length === 0) {
+    status.innerText = "❌ Adicione pelo menos um material";
+    btn.disabled = false;
+    return;
+  }
+
+  // coleta arquivos
+  const files = filesInput.files;
   const filesData = [];
-  let totalMB = 0;
   for (const file of files) {
-    if (file.size > 10*1024*1024) {
-      status.innerText = `❌ Arquivo ${file.name} maior que 10MB`;
-      btn.disabled = false;
-      return;
-    }
-    totalMB += file.size / (1024*1024);
-    if (totalMB > 25) {
-      status.innerText = "❌ Total de arquivos ultrapassa 25MB";
-      btn.disabled = false;
-      return;
-    }
     const base64 = await fileToBase64(file);
     filesData.push({ name: file.name, type: file.type, base64 });
   }
 
-  try {
-    const response = await fetch('https://script.google.com/macros/s/AKfycbxcfSvd98VIbxsg7wV4XbW_bexgoWK-_38fi1T24-PywzbiZ6yd7ktFVt4QOVMP_6ZBkA/exec', {
-      method: 'POST',
-      body: JSON.stringify({
-        investigator,
-        summary,
-        observations,
-        crimeType,
-        crimeCase,
-        files: filesData
-      })
+  // coleta mapa
+  const mapImageBase64 = document.getElementById("mapImage").value;
+  if (mapImageBase64) {
+    filesData.push({
+      name: "mapa_marcado.png",
+      type: "image/png",
+      base64: mapImageBase64.split(',')[1]
     });
+  }
 
-    const res = await response.json();
-    if (res.status === 'ok') {
-      status.innerText = `✅ Enviado com sucesso!`;
-      const savedInvestigator = form.investigator.value;
-      form.summary.value = "";
-      form.observations.value = "";
-      form.crimeType.value = "";
-      form.crimeCase.value = "N/A";
+  // envio via Apps Script
+  try {
+    const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec', {
+      method: 'POST',
+      body: JSON.stringify({ responsavel, participantes, materiais, files: filesData })
+    });
+    const result = await res.json();
+    if (result.status === 'ok') {
+      status.innerText = `✅ Apreensões enviadas!`;
+      materiaisContainer.innerHTML = "";
+      form.participantes.value = "";
       filesInput.value = "";
+      document.getElementById("mapX").value = "";
+      document.getElementById("mapY").value = "";
+      document.getElementById("mapImage").value = "";
       mbStatus.innerText = `Total: 0 MB / 25 MB`;
-      setTimeout(() => { status.innerText = ""; }, 2000);
-      form.investigator.value = savedInvestigator;
     } else {
-      status.innerText = "❌ " + (res.message || JSON.stringify(res));
+      status.innerText = `❌ ${result.message || JSON.stringify(result)}`;
     }
   } catch (err) {
-    status.innerText = "❌ Falha na comunicação: " + err.message;
+    status.innerText = `❌ Falha na comunicação: ${err.message}`;
   } finally {
     btn.disabled = false;
   }
