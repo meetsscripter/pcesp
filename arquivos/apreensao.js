@@ -66,7 +66,7 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    const guildId = "1396951868000702574"; // Servidor permitido
+    const guildId = "906991181228048455"; // Servidor permitido
     const isMember = await checkGuildMembership(token, guildId);
 
     if (isMember) {
@@ -257,3 +257,4 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
