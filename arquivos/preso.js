@@ -71,7 +71,7 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
 
     if (isMember) {
       // Mantendo lógica antiga
-      document.querySelector('[name="investigador"]').value = `<@${user.id}>`;
+      document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
       document.getElementById("discordLogin").style.display = "none";
       loginStatus.style.display = "none";
       document.querySelector('.form-section').style.display = "block";
@@ -255,5 +255,6 @@ document.getElementById('prisonerForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
 
 
