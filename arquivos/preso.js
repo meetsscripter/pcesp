@@ -1,7 +1,6 @@
 // ---------------------------
-// LOGIN COM DISCORD + VERIFICAÇÃO DE SERVIDOR
+// LOGIN COM DISCORD + VERIFICAÇÃO DE CARGO
 // ---------------------------
-
 async function loginWithDiscord() {
   const res = await fetch('https://script.google.com/macros/s/AKfycbyMTezC06ST-HF5vPjz-KvoQdrR_wgf3pOkEIVDmx7fIZD5ywcxOqCO_g-5RYB4FJpORA/exec');
   const data = await res.json();
@@ -40,7 +39,7 @@ async function fetchDiscordUser(token) {
   return await res.json();
 }
 
-// Verifica se o usuário está no servidor
+// Verifica se o usuário tem o cargo no servidor
 // Verifica se usuário está no servidor permitido
 async function checkGuildMembership(token, guildId) {
   try {
@@ -73,7 +72,7 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
 
     if (isMember) {
       // Mantendo lógica antiga
-      document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
+      document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
       document.getElementById("discordLogin").style.display = "none";
       loginStatus.style.display = "none";
       document.querySelector('.form-section').style.display = "block";
@@ -88,10 +87,81 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
   }
 });
 
-// ---------------------
-// SISTEMA DE UPLOAD E ENVIO
-// ---------------------
+// ---------------------------
+// ARTIGOS
+// ---------------------------
+const ARTICLES = [
+  "Tentativa de Homicídio","Estelionato","Suborno","Importar ou exportar mercadoria proibida",
+  "Fuga Evasão","Furto","Resistência a Prisão","Sequestro e Cárcere Privado",
+  "Depradação de patrimônio público ou privado","Busca e Apreensão","Disputar corridas ilegais",
+  "Direção perigosa","Agressão","Porte Ilegal de arma de fogo","Roubo","Abuso de Autoridade",
+  "Desobediência a Ordem Policial","Divulgar informações sigilosas ou reservadas","Lavagem de Dinheiro",
+  "Assalto a Joalheria","Ameaça","Tráfico de Drogas","Desacato","Difamação",
+  "Exercício ilegal da profissão","Assédio","Fuga do presídio","Tráfico de Armas",
+  "Assalto ao banco","Tráfico de influência","Corrupção","Associação criminosa",
+  "Injúria","Prevaricação","Violação ao Domicílio","Cumplicidade","Calúnia",
+  "Receptação","Extorsão","Fazer, publicamente, apologia de fato criminoso","Homicídio"
+];
 
+const articlesContainer = document.getElementById('articlesContainer');
+ARTICLES.forEach(a => {
+  const div = document.createElement('div');
+  div.className = 'material-row';
+  div.innerHTML = `<input type="checkbox" name="articles" value="${a}"> ${a}`;
+  articlesContainer.appendChild(div);
+});
+
+// ---------------------------
+// INTEGRANTES
+// ---------------------------
+let responsiblesList = [];
+
+function renderResponsibles() {
+  const container = document.getElementById('responsiblesContainer');
+  if(!container) return;
+  container.innerHTML = '';
+  responsiblesList.forEach((id, idx) => {
+    const div = document.createElement('div');
+    div.className = 'material-row';
+    div.innerHTML = `<span>&lt;@${id}&gt;</span>
+      <button type="button" data-idx="${idx}" class="editResponsible">Editar</button>
+      <button type="button" data-idx="${idx}" class="removeResponsible">Excluir</button>`;
+    container.appendChild(div);
+  });
+
+  document.querySelectorAll('.editResponsible').forEach(btn => {
+    btn.onclick = () => {
+      const idx = btn.dataset.idx;
+      const newId = prompt("Digite o novo ID Discord", responsiblesList[idx]);
+      if (newId) {
+        responsiblesList[idx] = newId.trim();
+        renderResponsibles();
+      }
+    }
+  });
+
+  document.querySelectorAll('.removeResponsible').forEach(btn => {
+    btn.onclick = () => {
+      const idx = btn.dataset.idx;
+      responsiblesList.splice(idx, 1);
+      renderResponsibles();
+    }
+  });
+}
+
+document.getElementById('addResponsible').addEventListener('click', () => {
+  const input = document.getElementById('responsibleInput');
+  const val = input.value.trim();
+  if (val && !responsiblesList.includes(val)) {
+    responsiblesList.push(val);
+    input.value = '';
+    renderResponsibles();
+  }
+});
+
+// ---------------------------
+// UPLOAD DE ARQUIVO
+// ---------------------------
 const filesInput = document.getElementById('files');
 const mbStatus = document.getElementById('mbStatus');
 
@@ -127,34 +197,9 @@ async function fileToBase64(file) {
 }
 
 // ---------------------------
-// ARTIGOS
+// ENVIO FORMULÁRIO
 // ---------------------------
-const ARTICLES = [
-  "Tentativa de Homicídio","Estelionato","Suborno","Importar ou exportar mercadoria proibida",
-  "Fuga Evasão","Furto","Resistência a Prisão","Sequestro e Cárcere Privado",
-  "Depradação de patrimônio público ou privado","Busca e Apreensão","Disputar corridas ilegais",
-  "Direção perigosa","Agressão","Porte Ilegal de arma de fogo","Roubo","Abuso de Autoridade",
-  "Desobediência a Ordem Policial","Divulgar informações sigilosas ou reservadas","Lavagem de Dinheiro",
-  "Assalto a Joalheria","Ameaça","Tráfico de Drogas","Desacato","Difamação",
-  "Exercício ilegal da profissão","Assédio","Fuga do presídio","Tráfico de Armas",
-  "Assalto ao banco","Tráfico de influência","Corrupção","Associação criminosa",
-  "Injúria","Prevaricação","Violação ao Domicílio","Cumplicidade","Calúnia",
-  "Receptação","Extorsão","Fazer, publicamente, apologia de fato criminoso","Homicídio"
-];
-
-const articlesContainer = document.getElementById('articlesContainer');
-ARTICLES.forEach(a => {
-  const div = document.createElement('div');
-  div.className = 'material-row';
-  div.innerHTML = `<input type="checkbox" name="articles" value="${a}"> ${a}`;
-  articlesContainer.appendChild(div);
-});
-
-// ---------------------
-// FORMULÁRIO DE ENVIO
-// ---------------------
-
-document.getElementById('investigationForm').addEventListener('submit', async e => {
+document.getElementById('prisonerForm').addEventListener('submit', async e => {
   e.preventDefault();
   const form = e.target;
   const status = document.getElementById('status');
@@ -164,34 +209,19 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
   status.innerText = "⏳ Enviando...";
 
   const investigator = form.investigator.value;
-  const summary = form.summary.value;
-  const observations = form.observations.value;
-  const crimeType = form.crimeType.value || "Não especificado";
-  const crimeCase = form.crimeCase.value || "N/A";
-
-  const files = filesInput.files;
-  if (files.length > 10) {
-    status.innerText = "❌ Máximo 10 arquivos";
-    btn.disabled = false;
-    return;
-  }
+  const prisonerName = form.prisonerName.value;
+  const prisonerCPF = form.prisonerCPF.value;
+  const description = form.description.value;
+  const articles = Array.from(form.querySelectorAll('input[name="articles"]:checked')).map(a => a.value);
 
   const filesData = [];
-  let totalMB = 0;
-  for (const file of files) {
-    if (file.size > 10*1024*1024) {
-      status.innerText = `❌ Arquivo ${file.name} maior que 10MB`;
-      btn.disabled = false;
-      return;
-    }
-    totalMB += file.size / (1024*1024);
-    if (totalMB > 25) {
-      status.innerText = "❌ Total de arquivos ultrapassa 25MB";
-      btn.disabled = false;
-      return;
-    }
-    const base64 = await fileToBase64(file);
-    filesData.push({ name: file.name, type: file.type, base64 });
+  for (let i = 0; i < filesInput.files.length; i++) {
+    const f = filesInput.files[i];
+    filesData.push({
+      name: f.name,
+      type: f.type,
+      base64: await fileToBase64(f)
+    });
   }
 
   try {
@@ -199,26 +229,24 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
       method: 'POST',
       body: JSON.stringify({
         investigator,
-        summary,
-        observations,
-        crimeType,
-        crimeCase,
+        prisonerName,
+        prisonerCPF,
+        description,
+        articles,
+        responsibles: responsiblesList,
         files: filesData
       })
     });
 
     const res = await response.json();
     if (res.status === 'ok') {
-      status.innerText = `✅ Enviado com sucesso!`;
+      status.innerText = "✅ Registro enviado com sucesso!";
       const savedInvestigator = form.investigator.value;
-      form.summary.value = "";
-      form.observations.value = "";
-      form.crimeType.value = "";
-      form.crimeCase.value = "N/A";
-      filesInput.value = "";
-      mbStatus.innerText = `Total: 0 MB / 25 MB`;
-      setTimeout(() => { status.innerText = ""; }, 2000);
+      form.reset();
       form.investigator.value = savedInvestigator;
+      mbStatus.innerText = `Total: 0 MB / 25 MB`;
+      responsiblesList = [];
+      renderResponsibles();
     } else {
       status.innerText = "❌ " + (res.message || JSON.stringify(res));
     }
@@ -228,7 +256,3 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
     btn.disabled = false;
   }
 });
-
-
-
-
