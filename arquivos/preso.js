@@ -126,6 +126,30 @@ async function fileToBase64(file) {
   });
 }
 
+// ---------------------------
+// ARTIGOS
+// ---------------------------
+const ARTICLES = [
+  "Tentativa de Homicídio","Estelionato","Suborno","Importar ou exportar mercadoria proibida",
+  "Fuga Evasão","Furto","Resistência a Prisão","Sequestro e Cárcere Privado",
+  "Depradação de patrimônio público ou privado","Busca e Apreensão","Disputar corridas ilegais",
+  "Direção perigosa","Agressão","Porte Ilegal de arma de fogo","Roubo","Abuso de Autoridade",
+  "Desobediência a Ordem Policial","Divulgar informações sigilosas ou reservadas","Lavagem de Dinheiro",
+  "Assalto a Joalheria","Ameaça","Tráfico de Drogas","Desacato","Difamação",
+  "Exercício ilegal da profissão","Assédio","Fuga do presídio","Tráfico de Armas",
+  "Assalto ao banco","Tráfico de influência","Corrupção","Associação criminosa",
+  "Injúria","Prevaricação","Violação ao Domicílio","Cumplicidade","Calúnia",
+  "Receptação","Extorsão","Fazer, publicamente, apologia de fato criminoso","Homicídio"
+];
+
+const articlesContainer = document.getElementById('articlesContainer');
+ARTICLES.forEach(a => {
+  const div = document.createElement('div');
+  div.className = 'material-row';
+  div.innerHTML = `<input type="checkbox" name="articles" value="${a}"> ${a}`;
+  articlesContainer.appendChild(div);
+});
+
 // ---------------------
 // FORMULÁRIO DE ENVIO
 // ---------------------
@@ -204,6 +228,7 @@ document.getElementById('investigationForm').addEventListener('submit', async e 
     btn.disabled = false;
   }
 });
+
 
 
 
