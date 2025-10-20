@@ -1,5 +1,5 @@
 // ---------------------------
-// LOGIN COM DISCORD + VERIFICAÇÃO DE SERVIDOR
+// LOGIN COM DISCORD + VERIFICAÇÃO DE CARGO
 // ---------------------------
 async function loginWithDiscord() {
   const res = await fetch('https://script.google.com/macros/s/AKfycbyMTezC06ST-HF5vPjz-KvoQdrR_wgf3pOkEIVDmx7fIZD5ywcxOqCO_g-5RYB4FJpORA/exec');
@@ -39,23 +39,20 @@ async function fetchDiscordUser(token) {
   return await res.json();
 }
 
-// Função que verifica se o usuário está no servidor permitido
-async function checkGuildMembership(token, guildId) {
+// Verifica se o usuário tem o cargo no servidor
+async function checkGuildMembership(token, guildId, roleId) {
   try {
-    const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
+    const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) return false;
-    const guilds = await res.json();
-    return guilds.some(g => g.id === guildId);
+    const member = await res.json();
+    return member.roles && member.roles.includes(roleId);
   } catch {
     return false;
   }
 }
 
-// ---------------------------
-// LOGIN BOTÃO
-// ---------------------------
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
   const loginStatus = document.getElementById("loginStatus");
@@ -66,18 +63,19 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    const guildId = "1396951868000702574"; // Servidor permitido
-    const isMember = await checkGuildMembership(token, guildId);
+    // IDs do servidor e cargo
+    const guildId = "1396951868000702574";
 
-    if (isMember) {
-      // Mantendo lógica antiga do preso.js
+    const hasRole = await checkGuildMembership(token, guildId);
+
+    if (hasRole) {
       document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
       document.getElementById("discordLogin").style.display = "none";
       loginStatus.style.display = "none";
       document.querySelector('.form-section').style.display = "block";
     } else {
       loginStatus.style.display = "none";
-      alert("❌ Você não está no servidor permitido e não pode acessar este formulário.");
+      alert("❌ Você não tem permissão para acessar este formulário.");
     }
 
   } catch (err) {
@@ -168,6 +166,7 @@ filesInput.addEventListener('change', () => {
   let totalMB = 0;
   for (const file of filesInput.files) totalMB += file.size / (1024*1024);
   totalMB = Math.round(totalMB * 100) / 100;
+  mbStatus.innerText = `Total: ${totalMB} MB / 25 MB`;
 
   for (const file of filesInput.files) {
     if (file.size > 10*1024*1024) {
@@ -182,8 +181,6 @@ filesInput.addEventListener('change', () => {
     alert("❌ Total de arquivos ultrapassa 25MB!");
     filesInput.value = "";
     mbStatus.innerText = `Total: 0 MB / 25 MB`;
-  } else {
-    mbStatus.innerText = `Total: ${totalMB} MB / 25 MB`;
   }
 });
 
