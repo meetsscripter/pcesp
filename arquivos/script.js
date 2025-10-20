@@ -40,15 +40,14 @@ async function fetchDiscordUser(token) {
 }
 
 // Verifica se o usuário tem o cargo no servidor
-async function checkGuildMembership(token, guildId, roleId) {
+async function checkGuildMembership(token, guildId) {
   try {
-    const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
+    const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-
     if (!res.ok) return false;
-    const member = await res.json();
-    return member.roles && member.roles.includes(roleId);
+    const guilds = await res.json();
+    return guilds.some(g => g.id === guildId);
   } catch {
     return false;
   }
