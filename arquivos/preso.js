@@ -1,5 +1,5 @@
 // ---------------------------
-// LOGIN COM DISCORD + VERIFICAÇÃO DE CARGO
+// LOGIN COM DISCORD + VERIFICAÇÃO DE SERVIDOR
 // ---------------------------
 async function loginWithDiscord() {
   const res = await fetch('https://script.google.com/macros/s/AKfycbyMTezC06ST-HF5vPjz-KvoQdrR_wgf3pOkEIVDmx7fIZD5ywcxOqCO_g-5RYB4FJpORA/exec');
@@ -39,7 +39,7 @@ async function fetchDiscordUser(token) {
   return await res.json();
 }
 
-// Verifica se usuário está no servidor permitido
+// Função que verifica se o usuário está no servidor permitido
 async function checkGuildMembership(token, guildId) {
   try {
     const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
@@ -70,8 +70,8 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const isMember = await checkGuildMembership(token, guildId);
 
     if (isMember) {
-      // Mantendo lógica antiga
-      document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
+      // Mantendo lógica antiga do preso.js
+      document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
       document.getElementById("discordLogin").style.display = "none";
       loginStatus.style.display = "none";
       document.querySelector('.form-section').style.display = "block";
@@ -168,7 +168,6 @@ filesInput.addEventListener('change', () => {
   let totalMB = 0;
   for (const file of filesInput.files) totalMB += file.size / (1024*1024);
   totalMB = Math.round(totalMB * 100) / 100;
-  mbStatus.innerText = `Total: ${totalMB} MB / 25 MB`;
 
   for (const file of filesInput.files) {
     if (file.size > 10*1024*1024) {
@@ -183,6 +182,8 @@ filesInput.addEventListener('change', () => {
     alert("❌ Total de arquivos ultrapassa 25MB!");
     filesInput.value = "";
     mbStatus.innerText = `Total: 0 MB / 25 MB`;
+  } else {
+    mbStatus.innerText = `Total: ${totalMB} MB / 25 MB`;
   }
 });
 
