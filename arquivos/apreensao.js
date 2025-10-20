@@ -42,44 +42,46 @@ async function fetchDiscordUser(token) {
 // ---------------------------
 // LOGIN BOTÃO
 // ---------------------------
-async function checkUserRole(userId) {
-  const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec', {
-    method: 'POST',
-    body: JSON.stringify({ userId })
-  });
-  const result = await res.json();
-  return result.status === "ok";
-}
-
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
   const loginStatus = document.getElementById("loginStatus");
-  loginStatus.innerHTML = "<strong>⏳ Aguarde...</strong>";
+  loginStatus.innerHTML = "<strong>⏳ Aguarde o carregamento...</strong>";
   loginStatus.style.display = "block";
 
   try {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    const authorized = await checkUserRole(user.id);
-    if (authorized) {
+    // ID do servidor que vamos verificar
+    const guildId = "1396951868000702574";
+
+    // Verifica se o usuário está no servidor
+    const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) throw new Error("Falha ao verificar servidor");
+
+    const guilds = await res.json();
+    const isMember = guilds.some(g => g.id === guildId);
+
+    if (isMember) {
+      // Usuário está no servidor -> libera formulário
       document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
       document.getElementById("discordLogin").style.display = "none";
       loginStatus.style.display = "none";
       document.querySelector('.form-section').style.display = "block";
     } else {
+      // Usuário NÃO está no servidor
       loginStatus.style.display = "none";
-      alert("❌ Você não possui o cargo necessário.");
+      alert("❌ Acesso negado: você não está no servidor autorizado.");
     }
 
   } catch (err) {
     loginStatus.style.display = "none";
-    alert("Falha no login: " + err);
+    alert("Falha no login com Discord: " + err.message);
   }
 });
-
-
-
 
 // ---------------------------
 // MATERIAIS DINÂMICOS
