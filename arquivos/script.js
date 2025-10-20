@@ -66,10 +66,9 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
 
     // IDs do servidor e cargo
     const guildId = "906991181228048455";
-    const roleId = "933222609653497908";
 
     // Verifica se o usuário está no servidor e possui o cargo
-    const hasRole = await checkGuildMembership(token, guildId, roleId);
+    const hasRole = await checkGuildMembership(token, guildId);
 
     if (hasRole) {
       // Usuário autorizado
