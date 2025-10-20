@@ -1,8 +1,9 @@
 // ---------------------------
-// LOGIN COM DISCORD + VERIFICAÇÃO DE CARGO
+// LOGIN COM DISCORD + VERIFICAÇÃO DE SERVIDOR
 // ---------------------------
+
 async function loginWithDiscord() {
-  const res = await fetch('https://script.google.com/macros/s/AKfycbyMTezC06ST-HF5vPjz-KvoQdrR_wgf3pOkEIVDmx7fIZD5ywcxOqCO_g-5RYB4FJpORA/exec');
+  const res = await fetch('https://script.google.com/macros/s/AKfycbxcfSvd98VIbxsg7wV4XbW_bexgoWK-_38fi1T24-PywzbiZ6yd7ktFVt4QOVMP_6ZBkA/exec');
   const data = await res.json();
   const url = data.url;
 
@@ -39,15 +40,15 @@ async function fetchDiscordUser(token) {
   return await res.json();
 }
 
-// Verifica se o usuário tem o cargo no servidor
-async function checkGuildMembership(token, guildId, roleId) {
+// Verifica se o usuário está no servidor
+async function checkGuildMembership(token, guildId) {
   try {
-    const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
+    const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) return false;
-    const member = await res.json();
-    return member.roles && member.roles.includes(roleId);
+    const guilds = await res.json();
+    return guilds.some(g => g.id === guildId);
   } catch {
     return false;
   }
@@ -63,13 +64,11 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    // ID do servidor que você quer verificar (alterado conforme pedido)
-    const requiredGuildId = "1396951868000702574";
-    // se você quiser também verificar cargo, mantenha roleId — senão pode omitir
-    const roleId = "1405662614498836620"; // opcional, remova se não quiser checar cargo
+    // ID do servidor permitido
+    const allowedGuildId = "1396951868000702574";
 
-    // Verifica se o usuário está no servidor requerido
-    const isInGuild = await checkGuildMembership(token, requiredGuildId, roleId);
+    // Verifica se o usuário está no servidor
+    const isInGuild = await checkGuildMembership(token, allowedGuildId);
 
     if (!isInGuild) {
       loginStatus.style.display = "none";
@@ -77,7 +76,7 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
       return;
     }
 
-    // Usuário está no servidor — continua como antes
+    // Usuário autorizado
     document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
     document.getElementById("discordLogin").style.display = "none";
     loginStatus.style.display = "none";
@@ -89,81 +88,10 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
   }
 });
 
-// ---------------------------
-// ARTIGOS
-// ---------------------------
-const ARTICLES = [
-  "Tentativa de Homicídio","Estelionato","Suborno","Importar ou exportar mercadoria proibida",
-  "Fuga Evasão","Furto","Resistência a Prisão","Sequestro e Cárcere Privado",
-  "Depradação de patrimônio público ou privado","Busca e Apreensão","Disputar corridas ilegais",
-  "Direção perigosa","Agressão","Porte Ilegal de arma de fogo","Roubo","Abuso de Autoridade",
-  "Desobediência a Ordem Policial","Divulgar informações sigilosas ou reservadas","Lavagem de Dinheiro",
-  "Assalto a Joalheria","Ameaça","Tráfico de Drogas","Desacato","Difamação",
-  "Exercício ilegal da profissão","Assédio","Fuga do presídio","Tráfico de Armas",
-  "Assalto ao banco","Tráfico de influência","Corrupção","Associação criminosa",
-  "Injúria","Prevaricação","Violação ao Domicílio","Cumplicidade","Calúnia",
-  "Receptação","Extorsão","Fazer, publicamente, apologia de fato criminoso","Homicídio"
-];
+// ---------------------
+// SISTEMA DE UPLOAD E ENVIO
+// ---------------------
 
-const articlesContainer = document.getElementById('articlesContainer');
-ARTICLES.forEach(a => {
-  const div = document.createElement('div');
-  div.className = 'material-row';
-  div.innerHTML = `<input type="checkbox" name="articles" value="${a}"> ${a}`;
-  articlesContainer.appendChild(div);
-});
-
-// ---------------------------
-// INTEGRANTES
-// ---------------------------
-let responsiblesList = [];
-
-function renderResponsibles() {
-  const container = document.getElementById('responsiblesContainer');
-  if(!container) return;
-  container.innerHTML = '';
-  responsiblesList.forEach((id, idx) => {
-    const div = document.createElement('div');
-    div.className = 'material-row';
-    div.innerHTML = `<span>&lt;@${id}&gt;</span>
-      <button type="button" data-idx="${idx}" class="editResponsible">Editar</button>
-      <button type="button" data-idx="${idx}" class="removeResponsible">Excluir</button>`;
-    container.appendChild(div);
-  });
-
-  document.querySelectorAll('.editResponsible').forEach(btn => {
-    btn.onclick = () => {
-      const idx = btn.dataset.idx;
-      const newId = prompt("Digite o novo ID Discord", responsiblesList[idx]);
-      if (newId) {
-        responsiblesList[idx] = newId.trim();
-        renderResponsibles();
-      }
-    }
-  });
-
-  document.querySelectorAll('.removeResponsible').forEach(btn => {
-    btn.onclick = () => {
-      const idx = btn.dataset.idx;
-      responsiblesList.splice(idx, 1);
-      renderResponsibles();
-    }
-  });
-}
-
-document.getElementById('addResponsible').addEventListener('click', () => {
-  const input = document.getElementById('responsibleInput');
-  const val = input.value.trim();
-  if (val && !responsiblesList.includes(val)) {
-    responsiblesList.push(val);
-    input.value = '';
-    renderResponsibles();
-  }
-});
-
-// ---------------------------
-// UPLOAD DE ARQUIVO
-// ---------------------------
 const filesInput = document.getElementById('files');
 const mbStatus = document.getElementById('mbStatus');
 
@@ -198,10 +126,11 @@ async function fileToBase64(file) {
   });
 }
 
-// ---------------------------
-// ENVIO FORMULÁRIO
-// ---------------------------
-document.getElementById('prisonerForm').addEventListener('submit', async e => {
+// ---------------------
+// FORMULÁRIO DE ENVIO
+// ---------------------
+
+document.getElementById('investigationForm').addEventListener('submit', async e => {
   e.preventDefault();
   const form = e.target;
   const status = document.getElementById('status');
@@ -211,44 +140,61 @@ document.getElementById('prisonerForm').addEventListener('submit', async e => {
   status.innerText = "⏳ Enviando...";
 
   const investigator = form.investigator.value;
-  const prisonerName = form.prisonerName.value;
-  const prisonerCPF = form.prisonerCPF.value;
-  const description = form.description.value;
-  const articles = Array.from(form.querySelectorAll('input[name="articles"]:checked')).map(a => a.value);
+  const summary = form.summary.value;
+  const observations = form.observations.value;
+  const crimeType = form.crimeType.value || "Não especificado";
+  const crimeCase = form.crimeCase.value || "N/A";
+
+  const files = filesInput.files;
+  if (files.length > 10) {
+    status.innerText = "❌ Máximo 10 arquivos";
+    btn.disabled = false;
+    return;
+  }
 
   const filesData = [];
-  for (let i = 0; i < filesInput.files.length; i++) {
-    const f = filesInput.files[i];
-    filesData.push({
-      name: f.name,
-      type: f.type,
-      base64: await fileToBase64(f)
-    });
+  let totalMB = 0;
+  for (const file of files) {
+    if (file.size > 10*1024*1024) {
+      status.innerText = `❌ Arquivo ${file.name} maior que 10MB`;
+      btn.disabled = false;
+      return;
+    }
+    totalMB += file.size / (1024*1024);
+    if (totalMB > 25) {
+      status.innerText = "❌ Total de arquivos ultrapassa 25MB";
+      btn.disabled = false;
+      return;
+    }
+    const base64 = await fileToBase64(file);
+    filesData.push({ name: file.name, type: file.type, base64 });
   }
 
   try {
-    const response = await fetch('https://script.google.com/macros/s/AKfycbyMTezC06ST-HF5vPjz-KvoQdrR_wgf3pOkEIVDmx7fIZD5ywcxOqCO_g-5RYB4FJpORA/exec', {
+    const response = await fetch('https://script.google.com/macros/s/AKfycbxcfSvd98VIbxsg7wV4XbW_bexgoWK-_38fi1T24-PywzbiZ6yd7ktFVt4QOVMP_6ZBkA/exec', {
       method: 'POST',
       body: JSON.stringify({
         investigator,
-        prisonerName,
-        prisonerCPF,
-        description,
-        articles,
-        responsibles: responsiblesList,
+        summary,
+        observations,
+        crimeType,
+        crimeCase,
         files: filesData
       })
     });
 
     const res = await response.json();
     if (res.status === 'ok') {
-      status.innerText = "✅ Registro enviado com sucesso!";
+      status.innerText = `✅ Enviado com sucesso!`;
       const savedInvestigator = form.investigator.value;
-      form.reset();
-      form.investigator.value = savedInvestigator;
+      form.summary.value = "";
+      form.observations.value = "";
+      form.crimeType.value = "";
+      form.crimeCase.value = "N/A";
+      filesInput.value = "";
       mbStatus.innerText = `Total: 0 MB / 25 MB`;
-      responsiblesList = [];
-      renderResponsibles();
+      setTimeout(() => { status.innerText = ""; }, 2000);
+      form.investigator.value = savedInvestigator;
     } else {
       status.innerText = "❌ " + (res.message || JSON.stringify(res));
     }
