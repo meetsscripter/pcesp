@@ -43,16 +43,15 @@ async function fetchDiscordUser(token) {
 // Verifica se o usuário está no servidor
 async function checkGuildMembership(token, guildId) {
   try {
-    const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
+    const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    if (!res.ok) return false;
-    const guilds = await res.json();
-    return guilds.some(g => g.id === guildId);
+    return res.ok; // true se estiver no servidor, false se não
   } catch {
     return false;
   }
 }
+
 
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
