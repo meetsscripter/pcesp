@@ -63,20 +63,25 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    // IDs do servidor e cargo
-    const guildId = "1396951868000702574";
+    // ID do servidor que você quer verificar (alterado conforme pedido)
+    const requiredGuildId = "1396951868000702574";
+    // se você quiser também verificar cargo, mantenha roleId — senão pode omitir
+    const roleId = "1405662614498836620"; // opcional, remova se não quiser checar cargo
 
-    const hasRole = await checkGuildMembership(token, guildId);
+    // Verifica se o usuário está no servidor requerido
+    const isInGuild = await checkGuildMembership(token, requiredGuildId, roleId);
 
-    if (hasRole) {
-      document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
-      document.getElementById("discordLogin").style.display = "none";
+    if (!isInGuild) {
       loginStatus.style.display = "none";
-      document.querySelector('.form-section').style.display = "block";
-    } else {
-      loginStatus.style.display = "none";
-      alert("❌ Você não tem permissão para acessar este formulário.");
+      alert("❌ Você não está no servidor permitido e não pode acessar este formulário.");
+      return;
     }
+
+    // Usuário está no servidor — continua como antes
+    document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
+    document.getElementById("discordLogin").style.display = "none";
+    loginStatus.style.display = "none";
+    document.querySelector('.form-section').style.display = "block";
 
   } catch (err) {
     loginStatus.style.display = "none";
