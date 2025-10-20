@@ -1,22 +1,23 @@
 // ---------------------------
-// LOGIN COM DISCORD + VERIFICAÇÃO DE SERVIDOR
+// LOGIN COM DISCORD + VERIFICAÇÃO DE PERMISSÃO
 // ---------------------------
 async function loginWithDiscord() {
-  const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec');
-  const data = await res.json();
-  const url = data.url;
+  // Abre popup de login
+  const urlRes = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec');
+  const data = await urlRes.json();
+  const loginUrl = data.url;
 
   const width = 500, height = 700;
   const left = (screen.width - width) / 2;
   const top = (screen.height - height) / 2;
-  const popup = window.open(url, "DiscordLogin", `width=${width},height=${height},top=${top},left=${left}`);
+  const popup = window.open(loginUrl, "DiscordLogin", `width=${width},height=${height},top=${top},left=${left}`);
 
   return new Promise((resolve, reject) => {
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       try {
-        if (!popup || popup.closed) {
-          clearInterval(interval);
-          reject("Login cancelado ou popup fechado");
+        if (!popup || popup.closed) { 
+          clearInterval(interval); 
+          reject("Login cancelado ou popup fechado"); 
         }
         const hash = popup.location.hash;
         if (hash) {
@@ -24,24 +25,20 @@ async function loginWithDiscord() {
           const params = new URLSearchParams(hash.substring(1));
           const token = params.get("access_token");
           popup.close();
-          if (token) resolve(token);
-          else reject("Token não encontrado");
+          if (!token) reject("Token não encontrado");
+
+          // Verifica permissão no Apps Script
+          const res = await fetch(`https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec?token=${token}`);
+          const result = await res.json();
+          if (result.status === "ok") resolve(result);
+          else reject(result.message);
         }
       } catch {}
     }, 500);
   });
 }
 
-async function fetchDiscordUser(token) {
-  const res = await fetch("https://discord.com/api/users/@me", {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return await res.json();
-}
-
-// ---------------------------
-// LOGIN BOTÃO
-// ---------------------------
+// Botão de login
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
   const loginStatus = document.getElementById("loginStatus");
@@ -49,37 +46,14 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
   loginStatus.style.display = "block";
 
   try {
-    const token = await loginWithDiscord();
-    const user = await fetchDiscordUser(token);
-
-    // ID do servidor que vamos verificar
-    const guildId = "1396951868000702574";
-
-    // Verifica se o usuário está no servidor
-    const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    if (!res.ok) throw new Error("Falha ao verificar servidor");
-
-    const guilds = await res.json();
-    const isMember = guilds.some(g => g.id === guildId);
-
-    if (isMember) {
-      // Usuário está no servidor -> libera formulário
-      document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
-      document.getElementById("discordLogin").style.display = "none";
-      loginStatus.style.display = "none";
-      document.querySelector('.form-section').style.display = "block";
-    } else {
-      // Usuário NÃO está no servidor
-      loginStatus.style.display = "none";
-      alert("❌ Acesso negado: você não está no servidor autorizado.");
-    }
-
+    const user = await loginWithDiscord();
+    document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
+    document.getElementById("discordLogin").style.display = "none";
+    loginStatus.style.display = "none";
+    document.querySelector('.form-section').style.display = "block";
   } catch (err) {
     loginStatus.style.display = "none";
-    alert("Falha no login com Discord: " + err.message);
+    alert("❌ " + err);
   }
 });
 
@@ -187,11 +161,13 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
 
   const responsavel = form.responsavel.value;
 
+  // transforma participantes em array
   let participantes = form.participantes.value;
   if (typeof participantes === 'string') {
     participantes = participantes.split(',').map(p => p.trim()).filter(p => p);
   }
 
+  // coleta materiais e soma quantidades iguais
   const materialRows = document.querySelectorAll('.material-row');
   const materiaisMap = {};
   materialRows.forEach(row => {
@@ -209,6 +185,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     return;
   }
 
+  // coleta arquivos
   const files = filesInput.files;
   const filesData = [];
   for (const file of files) {
@@ -216,6 +193,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     filesData.push({ name: file.name, type: file.type, base64 });
   }
 
+  // coleta mapa
   const mapImageBase64 = document.getElementById("mapImage").value;
   if (mapImageBase64) {
     filesData.push({
@@ -225,6 +203,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     });
   }
 
+  // envio via Apps Script
   try {
     const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec', {
       method: 'POST',
