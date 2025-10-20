@@ -1,5 +1,5 @@
 // ---------------------------
-// LOGIN COM DISCORD + VERIFICAÇÃO DE SERVIDOR
+// LOGIN COM DISCORD + VERIFICAÇÃO DE CARGO VIA BOT
 // ---------------------------
 async function loginWithDiscord() {
   const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec');
@@ -72,11 +72,9 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
 
   } catch (err) {
     loginStatus.style.display = "none";
-    alert("Falha no login com Discord: " + err.message);
+    alert("Falha no login com Discord: " + err);
   }
 });
-
-
 
 // ---------------------------
 // MATERIAIS DINÂMICOS
@@ -182,11 +180,13 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
 
   const responsavel = form.responsavel.value;
 
+  // transforma participantes em array
   let participantes = form.participantes.value;
   if (typeof participantes === 'string') {
     participantes = participantes.split(',').map(p => p.trim()).filter(p => p);
   }
 
+  // coleta materiais e soma quantidades iguais
   const materialRows = document.querySelectorAll('.material-row');
   const materiaisMap = {};
   materialRows.forEach(row => {
@@ -204,6 +204,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     return;
   }
 
+  // coleta arquivos
   const files = filesInput.files;
   const filesData = [];
   for (const file of files) {
@@ -211,6 +212,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     filesData.push({ name: file.name, type: file.type, base64 });
   }
 
+  // coleta mapa
   const mapImageBase64 = document.getElementById("mapImage").value;
   if (mapImageBase64) {
     filesData.push({
@@ -220,6 +222,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     });
   }
 
+  // envio via Apps Script
   try {
     const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec', {
       method: 'POST',
