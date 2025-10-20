@@ -39,22 +39,23 @@ async function fetchDiscordUser(token) {
   return await res.json();
 }
 
-// Verifica se o usuário tem o cargo no servidor
-// Verifica se o usuário tem o cargo no servidor
-async function checkGuildMembership(token, guildId, roleId) {
+// Verifica se usuário está no servidor permitido
+async function checkGuildMembership(token, guildId) {
   try {
-    const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
+    const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-
     if (!res.ok) return false;
-    const member = await res.json();
-    return member.roles && member.roles.includes(roleId);
+    const guilds = await res.json();
+    return guilds.some(g => g.id === guildId);
   } catch {
     return false;
   }
 }
 
+// ---------------------------
+// LOGIN BOTÃO
+// ---------------------------
 document.getElementById("discordLogin").addEventListener("click", async e => {
   e.preventDefault();
   const loginStatus = document.getElementById("loginStatus");
@@ -65,25 +66,19 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const token = await loginWithDiscord();
     const user = await fetchDiscordUser(token);
 
-    // ID do servidor que você quer verificar (alterado conforme pedido)
-    const requiredGuildId = "906991181228048455";
-    // se você quiser também verificar cargo, mantenha roleId — senão pode omitir
-    const roleId = "933222609653497908"; // opcional, remova se não quiser checar cargo
+    const guildId = "1396951868000702574"; // Servidor permitido
+    const isMember = await checkGuildMembership(token, guildId);
 
-    // Verifica se o usuário está no servidor requerido
-    const isInGuild = await checkGuildMembership(token, requiredGuildId, roleId);
-
-    if (!isInGuild) {
+    if (isMember) {
+      // Mantendo lógica antiga
+      document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
+      document.getElementById("discordLogin").style.display = "none";
+      loginStatus.style.display = "none";
+      document.querySelector('.form-section').style.display = "block";
+    } else {
       loginStatus.style.display = "none";
       alert("❌ Você não está no servidor permitido e não pode acessar este formulário.");
-      return;
     }
-
-    // Usuário está no servidor — continua como antes
-    document.querySelector('[name="investigator"]').value = `<@${user.id}>`;
-    document.getElementById("discordLogin").style.display = "none";
-    loginStatus.style.display = "none";
-    document.querySelector('.form-section').style.display = "block";
 
   } catch (err) {
     loginStatus.style.display = "none";
@@ -260,4 +255,3 @@ document.getElementById('prisonerForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
-
