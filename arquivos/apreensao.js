@@ -39,15 +39,17 @@ async function fetchDiscordUser(token) {
   return await res.json();
 }
 
-// Verifica se usuário está no servidor permitido
-async function checkGuildMembership(token, guildId) {
+// ---------------------------
+// VERIFICAÇÃO DE CARGO ESPECÍFICO
+// ---------------------------
+async function checkUserRole(token, guildId, roleId) {
   try {
-    const res = await fetch(`https://discord.com/api/users/@me/guilds`, {
+    const res = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) return false;
-    const guilds = await res.json();
-    return guilds.some(g => g.id === guildId);
+    const member = await res.json();
+    return member.roles && member.roles.includes(roleId);
   } catch {
     return false;
   }
@@ -67,17 +69,17 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const user = await fetchDiscordUser(token);
 
     const guildId = "1396951868000702574"; // Servidor permitido
-    const isMember = await checkGuildMembership(token, guildId);
+    const roleId = "1430323790734295061"; // Cargo obrigatório
+    const hasRole = await checkUserRole(token, guildId, roleId);
 
-    if (isMember) {
-      // Mantendo lógica antiga
-      document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
+    if (hasRole) {
+      document.getElementById('investigator').value = `<@${user.id}>`;
       document.getElementById("discordLogin").style.display = "none";
       loginStatus.style.display = "none";
       document.querySelector('.form-section').style.display = "block";
     } else {
       loginStatus.style.display = "none";
-      alert("❌ Você não está no servidor permitido e não pode acessar este formulário.");
+      alert("❌ Você não possui o cargo necessário para acessar este formulário.");
     }
 
   } catch (err) {
