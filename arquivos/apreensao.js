@@ -73,7 +73,7 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const hasRole = await checkUserRole(token, guildId, roleId);
 
     if (hasRole) {
-      document.getElementById('investigator').value = `<@${user.id}>`;
+      document.getElementById('responsavel').value = `<@${user.id}>`;
       document.getElementById("discordLogin").style.display = "none";
       loginStatus.style.display = "none";
       document.querySelector('.form-section').style.display = "block";
@@ -259,5 +259,6 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
 
 
