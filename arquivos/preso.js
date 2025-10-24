@@ -69,7 +69,7 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const user = await fetchDiscordUser(token);
 
     const guildId = "1396951868000702574"; // Servidor permitido
-    const roleId = "1430323790734295061"; // Cargo obrigatório
+    const roleId = "1405666591668043808"; // Cargo obrigatório
     const hasRole = await checkUserRole(token, guildId, roleId);
 
     if (hasRole) {
@@ -257,3 +257,4 @@ document.getElementById('prisonerForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
