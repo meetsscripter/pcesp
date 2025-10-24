@@ -43,7 +43,7 @@ header h1 {
 
 /* Logo centralizada */
 .main-container img {
-  width: 200px;
+  width: 150px;
   height: auto;
   margin-bottom: 15px;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
@@ -383,5 +383,6 @@ form select:focus {
 #responsiblesContainer .material-row button:hover {
   background-color: #276dd9;
 }
+
 
 
