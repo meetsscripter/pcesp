@@ -73,13 +73,14 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const hasRole = await checkUserRole(token, guildId, roleId);
 
     if (hasRole) {
-      document.getElementById('name="responsavel').value = `<@${user.id}>`;
+      // Mantendo lógica antiga
+      document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
       document.getElementById("discordLogin").style.display = "none";
       loginStatus.style.display = "none";
       document.querySelector('.form-section').style.display = "block";
     } else {
       loginStatus.style.display = "none";
-      alert("❌ Você não possui o cargo necessário para acessar este formulário.");
+      alert("❌ Você não está no servidor permitido e não pode acessar este formulário.");
     }
 
   } catch (err) {
@@ -259,7 +260,5 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
-
-
 
 
