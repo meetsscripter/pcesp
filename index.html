@@ -5,55 +5,17 @@
   <title>Registro de Apreensões</title>
   <link rel="stylesheet" href="arquivos/style.css" />
   <link rel="icon" href="arquivos/Logo.png" type="image/png" />
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     #mapContainer {
       display: none;
       text-align: center;
       margin-top: 20px;
-      position: relative;
     }
     #mapCanvas {
       cursor: crosshair;
       border: 3px solid #444;
       border-radius: 8px;
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      transition: transform 0.2s ease;
-      transform-origin: center center;
-    }
-    #imagem_radar {
-      border-radius: 8px;
       max-width: 100%;
-      transition: transform 0.2s ease;
-      transform-origin: center center;
-    }
-    .map-controls {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .map-controls button {
-      background: rgba(0,0,0,0.7);
-      color: white;
-      border: none;
-      font-size: 18px;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 36px;
-      height: 36px;
-      line-height: 36px;
-      text-align: center;
-      transition: background 0.2s;
-    }
-    .map-controls button:hover {
-      background: rgba(255,0,0,0.8);
     }
   </style>
 </head>
@@ -93,12 +55,6 @@
 
       <div id="mapContainer">
         <h3>Selecione o Local no Mapa</h3>
-        <div class="map-controls">
-          <button type="button" id="zoomIn">+</button>
-          <button type="button" id="zoomOut">-</button>
-          <button type="button" id="clearCircle">🗑️</button>
-        </div>
-        <img id="imagem_radar" src="arquivos/imagem_radar.png" />
         <canvas id="mapCanvas"></canvas>
         <input type="hidden" id="mapX" name="mapX" />
         <input type="hidden" id="mapY" name="mapY" />
@@ -114,128 +70,71 @@
     &copy; 2025 Polícia Civil do Estado de São Paulo. Todos os direitos reservados.
   </footer>
 
+  <!-- Script principal -->
   <script src="arquivos/apreensao.js"></script>
 
-  <script>
-    const canvas = document.getElementById("mapCanvas");
-    const ctx = canvas.getContext("2d");
-    const img = document.getElementById("imagem_radar");
-    const zoomInBtn = document.getElementById("zoomIn");
-    const zoomOutBtn = document.getElementById("zoomOut");
-    const clearCircleBtn = document.getElementById("clearCircle");
+  <!-- Script do mapa -->
+<!-- Script do mapa -->
+<script>
+  const canvas = document.getElementById("mapCanvas");
+  const ctx = canvas.getContext("2d");
+  const img = new Image();
+  img.src = "arquivos/imagem_radar.png";
 
-    let isDrawing = false;
-    let startX, startY, radius;
-    let zoomLevel = 1;
-    let drawnCircle = null;
+  let isDrawing = false;
+  let startX, startY, radius = 0;
 
-    function resizeCanvas() {
-      canvas.width = img.clientWidth;
-      canvas.height = img.clientHeight;
-      if (drawnCircle) redrawCircle();
-    }
+  img.onload = () => {
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+    document.getElementById("mapContainer").style.display = "block";
+  };
 
-    window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('load', () => {
-      resizeCanvas();
-      document.getElementById("mapContainer").style.display = "block";
-    });
+  canvas.addEventListener("mousedown", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = img.width / rect.width;
+    const scaleY = img.height / rect.height;
+    startX = (e.clientX - rect.left) * scaleX;
+    startY = (e.clientY - rect.top) * scaleY;
+    isDrawing = true;
+  });
 
-    // -------------------------------
-    // DESENHO DO CÍRCULO
-    // -------------------------------
-    canvas.addEventListener('mousedown', e => {
-      isDrawing = true;
-      const rect = canvas.getBoundingClientRect();
-      startX = e.clientX - rect.left;
-      startY = e.clientY - rect.top;
-    });
+  canvas.addEventListener("mousemove", (e) => {
+    if (!isDrawing) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = img.width / rect.width;
+    const scaleY = img.height / rect.height;
+    const currentX = (e.clientX - rect.left) * scaleX;
+    const currentY = (e.clientY - rect.top) * scaleY;
+    radius = Math.sqrt((currentX - startX) ** 2 + (currentY - startY) ** 2);
 
-    canvas.addEventListener('mousemove', e => {
-      if (!isDrawing) return;
-      const rect = canvas.getBoundingClientRect();
-      const currentX = e.clientX - rect.left;
-      const currentY = e.clientY - rect.top;
-      radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
+    // redesenha mapa e círculo em tempo real
+    ctx.drawImage(img, 0, 0);
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  });
 
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      if (drawnCircle) {
-        ctx.beginPath();
-        ctx.arc(drawnCircle.x, drawnCircle.y, drawnCircle.radius, 0, 2*Math.PI);
-        ctx.strokeStyle = 'red';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-      }
+  canvas.addEventListener("mouseup", async (e) => {
+    if (!isDrawing) return;
+    isDrawing = false;
 
-      ctx.beginPath();
-      ctx.arc(startX, startY, radius, 0, 2*Math.PI);
-      ctx.strokeStyle = 'rgba(255,0,0,0.7)';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-    });
+    // Salva posição e raio
+    document.getElementById("mapX").value = Math.round(startX);
+    document.getElementById("mapY").value = Math.round(startY);
 
-    canvas.addEventListener('mouseup', () => {
-      if (!isDrawing) return;
-      isDrawing = false;
-      drawnCircle = { x: startX, y: startY, radius };
-    });
+    // Gera imagem base64 com círculo desenhado
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      document.getElementById("mapImage").value = reader.result;
+    };
+    reader.readAsDataURL(blob);
+  });
+</script>
 
-    // -------------------------------
-    // LIMPAR CÍRCULO
-    // -------------------------------
-    clearCircleBtn.addEventListener('click', () => {
-      drawnCircle = null;
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-    });
-
-    // -------------------------------
-    // ZOOM
-    // -------------------------------
-    zoomInBtn.addEventListener('click', () => {
-      zoomLevel += 0.1;
-      img.style.transform = `scale(${zoomLevel})`;
-      canvas.style.transform = `scale(${zoomLevel})`;
-    });
-
-    zoomOutBtn.addEventListener('click', () => {
-      if (zoomLevel > 0.3) {
-        zoomLevel -= 0.1;
-        img.style.transform = `scale(${zoomLevel})`;
-        canvas.style.transform = `scale(${zoomLevel})`;
-      }
-    });
-
-    // -------------------------------
-    // REDESENHAR CÍRCULO
-    // -------------------------------
-    function redrawCircle() {
-      if (!drawnCircle) return;
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.beginPath();
-      ctx.arc(drawnCircle.x, drawnCircle.y, drawnCircle.radius, 0, 2*Math.PI);
-      ctx.strokeStyle = 'red';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-    }
-
-    // -------------------------------
-    // GERAR IMAGEM FINAL
-    // -------------------------------
-    async function getMapImage() {
-      const container = document.querySelector('.map-container');
-      return await html2canvas(container, { useCORS:true, scale:2 })
-        .then(canvas => canvas.toDataURL('image/png'));
-    }
-
-    document.getElementById('apreensaoForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const mapImageBase64 = await getMapImage();
-      document.getElementById("mapImage").value = mapImageBase64;
-      document.getElementById("status").innerText = "⏳ Enviando...";
-      // Aqui você pode chamar a função de envio do apreensao.js
-      console.log("Imagem do mapa com círculo:", mapImageBase64);
-      document.getElementById("status").innerText = "✅ Apreensão registrada!";
-    });
-  </script>
 </body>
 </html>
