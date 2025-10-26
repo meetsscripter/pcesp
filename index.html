@@ -85,52 +85,51 @@
   let startX, startY, radius = 0;
 
   img.onload = () => {
-    // Define o canvas para ocupar quase toda a largura da tela mantendo proporção
-    const maxWidth = window.innerWidth * 0.95; // 95% da largura da tela
-    const scale = maxWidth / img.width;
-
-    canvas.width = img.width * scale;
+    // Define canvas grande para visualização, mantendo proporção
+    const displayWidth = img.width * 3; // 3x maior visualmente
+    const scale = displayWidth / img.width; // escala do canvas
+    canvas.width = displayWidth;
     canvas.height = img.height * scale;
 
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     document.getElementById("mapContainer").style.display = "block";
+
+    // Armazena escala para ajustar coordenadas do círculo
+    canvas.dataset.scale = scale;
   };
 
   canvas.addEventListener("mousedown", (e) => {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    startX = (e.clientX - rect.left) * scaleX;
-    startY = (e.clientY - rect.top) * scaleY;
+    const scale = canvas.dataset.scale;
+    startX = (e.clientX - rect.left) / scale;
+    startY = (e.clientY - rect.top) / scale;
     isDrawing = true;
   });
 
   canvas.addEventListener("mousemove", (e) => {
     if (!isDrawing) return;
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const currentX = (e.clientX - rect.left) * scaleX;
-    const currentY = (e.clientY - rect.top) * scaleY;
+    const scale = canvas.dataset.scale;
+    const currentX = (e.clientX - rect.left) / scale;
+    const currentY = (e.clientY - rect.top) / scale;
     radius = Math.sqrt((currentX - startX) ** 2 + (currentY - startY) ** 2);
 
-    // redesenha mapa e círculo em tempo real
+    // redesenha mapa e círculo com escala original
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = "red";
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+    ctx.arc(startX * scale, startY * scale, radius * scale, 0, Math.PI * 2);
     ctx.stroke();
   });
 
-  canvas.addEventListener("mouseup", async (e) => {
+  canvas.addEventListener("mouseup", async () => {
     if (!isDrawing) return;
     isDrawing = false;
 
     document.getElementById("mapX").value = Math.round(startX);
     document.getElementById("mapY").value = Math.round(startY);
 
-    // Gera imagem base64 com círculo desenhado
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -138,17 +137,10 @@
     };
     reader.readAsDataURL(blob);
   });
-
-  // Atualiza canvas se janela for redimensionada
-  window.addEventListener("resize", () => {
-    const maxWidth = window.innerWidth * 0.95;
-    const scale = maxWidth / img.width;
-    canvas.width = img.width * scale;
-    canvas.height = img.height * scale;
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  });
 </script>
+
 
 
 </body>
 </html>
+
