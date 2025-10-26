@@ -10,12 +10,45 @@
       display: none;
       text-align: center;
       margin-top: 20px;
+      cursor: pointer;
     }
+
     #mapCanvas {
-      cursor: crosshair;
       border: 3px solid #444;
       border-radius: 8px;
-      max-width: 100%;
+    }
+
+    /* Overlay full-screen */
+    #mapOverlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.9);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      flex-direction: column;
+    }
+
+    #mapOverlay canvas {
+      max-width: 95%;
+      max-height: 90%;
+      border: 3px solid #444;
+      border-radius: 8px;
+      cursor: crosshair;
+    }
+
+    #closeMapOverlay {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background: red;
+      color: white;
     }
   </style>
 </head>
@@ -54,7 +87,7 @@
       <small id="mbStatus">Total: 0 MB / 25 MB</small>
 
       <div id="mapContainer">
-        <h3>Selecione o Local no Mapa</h3>
+        <h3>Clique na imagem para ampliar</h3>
         <canvas id="mapCanvas"></canvas>
         <input type="hidden" id="mapX" name="mapX" />
         <input type="hidden" id="mapY" name="mapY" />
@@ -66,6 +99,12 @@
     </form>
   </section>
 
+  <!-- Overlay full-screen para mapa -->
+  <div id="mapOverlay">
+    <canvas id="mapCanvasOverlay"></canvas>
+    <button id="closeMapOverlay">Fechar</button>
+  </div>
+
   <footer>
     &copy; 2025 Polícia Civil do Estado de São Paulo. Todos os direitos reservados.
   </footer>
@@ -73,74 +112,80 @@
   <!-- Script principal -->
   <script src="arquivos/apreensao.js"></script>
 
-  <!-- Script do mapa -->
-<!-- Script do mapa -->
-<script>
-  const canvas = document.getElementById("mapCanvas");
-  const ctx = canvas.getContext("2d");
-  const img = new Image();
-  img.src = "arquivos/imagem_radar.png";
+  <!-- Script do mapa com overlay -->
+  <script>
+    const canvasNormal = document.getElementById("mapCanvas");
+    const mapContainer = document.getElementById("mapContainer");
+    const img = new Image();
+    img.src = "arquivos/imagem_radar.png";
 
-  let isDrawing = false;
-  let startX, startY, radius = 0;
+    const overlay = document.getElementById("mapOverlay");
+    const canvasOverlay = document.getElementById("mapCanvasOverlay");
+    const ctxOverlay = canvasOverlay.getContext("2d");
+    const closeBtn = document.getElementById("closeMapOverlay");
 
-  img.onload = () => {
-    // Define canvas grande para visualização, mantendo proporção
-    const displayWidth = img.width * 3; // 3x maior visualmente
-    const scale = displayWidth / img.width; // escala do canvas
-    canvas.width = displayWidth;
-    canvas.height = img.height * scale;
+    let isDrawing = false, startX, startY, radius = 0;
 
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    document.getElementById("mapContainer").style.display = "block";
-
-    // Armazena escala para ajustar coordenadas do círculo
-    canvas.dataset.scale = scale;
-  };
-
-  canvas.addEventListener("mousedown", (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const scale = canvas.dataset.scale;
-    startX = (e.clientX - rect.left) / scale;
-    startY = (e.clientY - rect.top) / scale;
-    isDrawing = true;
-  });
-
-  canvas.addEventListener("mousemove", (e) => {
-    if (!isDrawing) return;
-    const rect = canvas.getBoundingClientRect();
-    const scale = canvas.dataset.scale;
-    const currentX = (e.clientX - rect.left) / scale;
-    const currentY = (e.clientY - rect.top) / scale;
-    radius = Math.sqrt((currentX - startX) ** 2 + (currentY - startY) ** 2);
-
-    // redesenha mapa e círculo com escala original
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "red";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(startX * scale, startY * scale, radius * scale, 0, Math.PI * 2);
-    ctx.stroke();
-  });
-
-  canvas.addEventListener("mouseup", async () => {
-    if (!isDrawing) return;
-    isDrawing = false;
-
-    document.getElementById("mapX").value = Math.round(startX);
-    document.getElementById("mapY").value = Math.round(startY);
-
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      document.getElementById("mapImage").value = reader.result;
+    img.onload = () => {
+      // Canvas normal
+      canvasNormal.width = img.width / 4; // pequena para visualização
+      canvasNormal.height = img.height / 4;
+      const ctxNormal = canvasNormal.getContext("2d");
+      ctxNormal.drawImage(img, 0, 0, canvasNormal.width, canvasNormal.height);
+      mapContainer.style.display = "block";
     };
-    reader.readAsDataURL(blob);
-  });
-</script>
 
+    // Abrir overlay full-screen ao clicar na imagem normal
+    mapContainer.addEventListener("click", () => {
+      overlay.style.display = "flex";
+      const scale = Math.min(window.innerWidth * 0.95 / img.width, window.innerHeight * 0.85 / img.height);
+      canvasOverlay.width = img.width * scale;
+      canvasOverlay.height = img.height * scale;
+      ctxOverlay.drawImage(img, 0, 0, canvasOverlay.width, canvasOverlay.height);
+      canvasOverlay.dataset.scale = scale;
+    });
 
+    closeBtn.addEventListener("click", () => {
+      overlay.style.display = "none";
+    });
 
+    canvasOverlay.addEventListener("mousedown", e => {
+      const rect = canvasOverlay.getBoundingClientRect();
+      const scale = canvasOverlay.dataset.scale;
+      startX = (e.clientX - rect.left) / scale;
+      startY = (e.clientY - rect.top) / scale;
+      isDrawing = true;
+    });
+
+    canvasOverlay.addEventListener("mousemove", e => {
+      if (!isDrawing) return;
+      const rect = canvasOverlay.getBoundingClientRect();
+      const scale = canvasOverlay.dataset.scale;
+      const currentX = (e.clientX - rect.left) / scale;
+      const currentY = (e.clientY - rect.top) / scale;
+      radius = Math.sqrt((currentX - startX)**2 + (currentY - startY)**2);
+
+      ctxOverlay.drawImage(img, 0, 0, canvasOverlay.width, canvasOverlay.height);
+      ctxOverlay.strokeStyle = "red";
+      ctxOverlay.lineWidth = 4;
+      ctxOverlay.beginPath();
+      ctxOverlay.arc(startX * scale, startY * scale, radius * scale, 0, Math.PI*2);
+      ctxOverlay.stroke();
+    });
+
+    canvasOverlay.addEventListener("mouseup", async () => {
+      if (!isDrawing) return;
+      isDrawing = false;
+      document.getElementById("mapX").value = Math.round(startX);
+      document.getElementById("mapY").value = Math.round(startY);
+
+      const blob = await new Promise(resolve => canvasOverlay.toBlob(resolve, "image/png"));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        document.getElementById("mapImage").value = reader.result;
+      };
+      reader.readAsDataURL(blob);
+    });
+  </script>
 </body>
 </html>
-
