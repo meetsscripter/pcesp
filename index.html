@@ -75,7 +75,6 @@
 
   <!-- Script do mapa -->
 <!-- Script do mapa -->
-<!-- Script do mapa com zoom e círculo -->
 <script>
   const canvas = document.getElementById("mapCanvas");
   const ctx = canvas.getContext("2d");
@@ -84,86 +83,50 @@
 
   let isDrawing = false;
   let startX, startY, radius = 0;
-  let zoom = 1; // nível de zoom (1 = normal)
-  const ZOOM_STEP = 0.2;
-  const MAX_ZOOM = 3;
-  const MIN_ZOOM = 1;
-
-  // cria botões de zoom dinamicamente
-  const zoomControls = document.createElement("div");
-  zoomControls.innerHTML = `
-    <button id="zoomIn" style="margin:5px;padding:6px 12px;font-weight:bold;">🔍 + Zoom</button>
-    <button id="zoomOut" style="margin:5px;padding:6px 12px;font-weight:bold;">🔎 - Zoom</button>
-  `;
-  document.getElementById("mapContainer").prepend(zoomControls);
 
   img.onload = () => {
     canvas.width = img.width;
     canvas.height = img.height;
-    drawMap();
+    ctx.drawImage(img, 0, 0);
     document.getElementById("mapContainer").style.display = "block";
   };
 
-  function drawMap() {
-    const scaledWidth = img.width * zoom;
-    const scaledHeight = img.height * zoom;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
-    if (radius > 0) {
-      ctx.strokeStyle = "red";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(startX * zoom, startY * zoom, radius * zoom, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-  }
-
-  // eventos de zoom
-  document.getElementById("zoomIn").addEventListener("click", () => {
-    if (zoom < MAX_ZOOM) {
-      zoom += ZOOM_STEP;
-      drawMap();
-    }
-  });
-
-  document.getElementById("zoomOut").addEventListener("click", () => {
-    if (zoom > MIN_ZOOM) {
-      zoom -= ZOOM_STEP;
-      drawMap();
-    }
-  });
-
-  // eventos de desenho
   canvas.addEventListener("mousedown", (e) => {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = img.width / (rect.width / zoom);
-    const scaleY = img.height / (rect.height / zoom);
-    startX = (e.clientX - rect.left) * (scaleX / zoom);
-    startY = (e.clientY - rect.top) * (scaleY / zoom);
+    const scaleX = img.width / rect.width;
+    const scaleY = img.height / rect.height;
+    startX = (e.clientX - rect.left) * scaleX;
+    startY = (e.clientY - rect.top) * scaleY;
     isDrawing = true;
   });
 
   canvas.addEventListener("mousemove", (e) => {
     if (!isDrawing) return;
     const rect = canvas.getBoundingClientRect();
-    const scaleX = img.width / (rect.width / zoom);
-    const scaleY = img.height / (rect.height / zoom);
-    const currentX = (e.clientX - rect.left) * (scaleX / zoom);
-    const currentY = (e.clientY - rect.top) * (scaleY / zoom);
+    const scaleX = img.width / rect.width;
+    const scaleY = img.height / rect.height;
+    const currentX = (e.clientX - rect.left) * scaleX;
+    const currentY = (e.clientY - rect.top) * scaleY;
     radius = Math.sqrt((currentX - startX) ** 2 + (currentY - startY) ** 2);
 
-    drawMap();
+    // redesenha mapa e círculo em tempo real
+    ctx.drawImage(img, 0, 0);
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+    ctx.stroke();
   });
 
-  canvas.addEventListener("mouseup", async () => {
+  canvas.addEventListener("mouseup", async (e) => {
     if (!isDrawing) return;
     isDrawing = false;
 
-    // salva posição e raio original (sem zoom)
+    // Salva posição e raio
     document.getElementById("mapX").value = Math.round(startX);
     document.getElementById("mapY").value = Math.round(startY);
 
-    // gera imagem base64 com círculo desenhado
+    // Gera imagem base64 com círculo desenhado
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -173,7 +136,5 @@
   });
 </script>
 
-
 </body>
 </html>
-
