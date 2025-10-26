@@ -84,39 +84,41 @@
   let isDrawing = false;
   let startX, startY, radius = 0;
 
-  img.onload = () => {
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.drawImage(img, 0, 0);
-    document.getElementById("mapContainer").style.display = "block";
-  };
+img.onload = () => {
+  const scaleFactor = 2; // aumenta a imagem e o canvas 2x
+  canvas.width = img.width * scaleFactor;
+  canvas.height = img.height * scaleFactor;
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  document.getElementById("mapContainer").style.display = "block";
+};
 
-  canvas.addEventListener("mousedown", (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = img.width / rect.width;
-    const scaleY = img.height / rect.height;
-    startX = (e.clientX - rect.left) * scaleX;
-    startY = (e.clientY - rect.top) * scaleY;
-    isDrawing = true;
-  });
+canvas.addEventListener("mousemove", (e) => {
+  if (!isDrawing) return;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = (img.width * scaleFactor) / rect.width;
+  const scaleY = (img.height * scaleFactor) / rect.height;
+  const currentX = (e.clientX - rect.left) * scaleX;
+  const currentY = (e.clientY - rect.top) * scaleY;
+  radius = Math.sqrt((currentX - startX) ** 2 + (currentY - startY) ** 2);
 
-  canvas.addEventListener("mousemove", (e) => {
-    if (!isDrawing) return;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = img.width / rect.width;
-    const scaleY = img.height / rect.height;
-    const currentX = (e.clientX - rect.left) * scaleX;
-    const currentY = (e.clientY - rect.top) * scaleY;
-    radius = Math.sqrt((currentX - startX) ** 2 + (currentY - startY) ** 2);
+  // redesenha mapa e círculo em tempo real
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = "red";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+  ctx.stroke();
+});
 
-    // redesenha mapa e círculo em tempo real
-    ctx.drawImage(img, 0, 0);
-    ctx.strokeStyle = "red";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(startX, startY, radius, 0, Math.PI * 2);
-    ctx.stroke();
-  });
+canvas.addEventListener("mousedown", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = (img.width * scaleFactor) / rect.width;
+  const scaleY = (img.height * scaleFactor) / rect.height;
+  startX = (e.clientX - rect.left) * scaleX;
+  startY = (e.clientY - rect.top) * scaleY;
+  isDrawing = true;
+});
+
 
   canvas.addEventListener("mouseup", async (e) => {
     if (!isDrawing) return;
