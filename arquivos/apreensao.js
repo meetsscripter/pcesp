@@ -73,7 +73,6 @@ document.getElementById("discordLogin").addEventListener("click", async e => {
     const hasRole = await checkUserRole(token, guildId, roleId);
 
     if (hasRole) {
-      // Mantendo lógica antiga
       document.querySelector('[name="responsavel"]').value = `<@${user.id}>`;
       document.getElementById("discordLogin").style.display = "none";
       loginStatus.style.display = "none";
@@ -182,9 +181,9 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
   btn.disabled = true;
   status.innerText = "⏳ Enviando...";
 
-  // validação do mapa
   const mapX = document.getElementById("mapX").value;
   const mapY = document.getElementById("mapY").value;
+
   if (!mapX || !mapY) {
     status.innerText = "❌ Selecione o local no mapa antes de enviar!";
     btn.disabled = false;
@@ -193,13 +192,11 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
 
   const responsavel = form.responsavel.value;
 
-  // transforma participantes em array, separando por vírgula, caso seja string
   let participantes = form.participantes.value;
   if (typeof participantes === 'string') {
     participantes = participantes.split(',').map(p => p.trim()).filter(p => p);
   }
 
-  // coleta materiais e soma quantidades iguais
   const materialRows = document.querySelectorAll('.material-row');
   const materiaisMap = {};
   materialRows.forEach(row => {
@@ -217,7 +214,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     return;
   }
 
-  // coleta arquivos
+  // arquivos
   const files = filesInput.files;
   const filesData = [];
   for (const file of files) {
@@ -225,17 +222,24 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     filesData.push({ name: file.name, type: file.type, base64 });
   }
 
-  // coleta mapa
-  const mapImageBase64 = document.getElementById("mapImage").value;
-  if (mapImageBase64) {
-    filesData.push({
-      name: "mapa_marcado.png",
-      type: "image/png",
-      base64: mapImageBase64.split(',')[1]
+  // ---------------------------
+  // MAPA COM CÍRCULO
+  // ---------------------------
+  const canvas = document.getElementById("mapCanvas");
+  if (canvas) {
+    const mapContainer = document.getElementById("mapContainer");
+    await html2canvas(mapContainer, { useCORS: true, scale: 2 }).then(canvasImg => {
+      filesData.push({
+        name: "mapa_marcado.png",
+        type: "image/png",
+        base64: canvasImg.toDataURL("image/png").split(',')[1]
+      });
     });
   }
 
-  // envio via Apps Script
+  // ---------------------------
+  // ENVIO PARA APPS SCRIPT
+  // ---------------------------
   try {
     const res = await fetch('https://script.google.com/macros/s/AKfycbxpvvndcbuR_-I4oggzumzHPDeSQQdpccOCaf8NcTzY9E6AdznAysviTxIXvYL-C27Tqg/exec', {
       method: 'POST',
@@ -251,6 +255,9 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
       document.getElementById("mapY").value = "";
       document.getElementById("mapImage").value = "";
       mbStatus.innerText = `Total: 0 MB / 25 MB`;
+      // Limpar círculo
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0,0,canvas.width,canvas.height);
     } else {
       status.innerText = `❌ ${result.message || JSON.stringify(result)}`;
     }
@@ -260,6 +267,3 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
-
-
-
