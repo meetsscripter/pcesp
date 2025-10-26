@@ -84,17 +84,19 @@
   let isDrawing = false;
   let startX, startY, radius = 0;
 
+  const scaleFactor = 2.5; // Aumenta a imagem em 2.5x (ajuste conforme necessário)
+
   img.onload = () => {
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.drawImage(img, 0, 0);
+    canvas.width = img.width * scaleFactor;
+    canvas.height = img.height * scaleFactor;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     document.getElementById("mapContainer").style.display = "block";
   };
 
   canvas.addEventListener("mousedown", (e) => {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = img.width / rect.width;
-    const scaleY = img.height / rect.height;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
     startX = (e.clientX - rect.left) * scaleX;
     startY = (e.clientY - rect.top) * scaleY;
     isDrawing = true;
@@ -103,14 +105,14 @@
   canvas.addEventListener("mousemove", (e) => {
     if (!isDrawing) return;
     const rect = canvas.getBoundingClientRect();
-    const scaleX = img.width / rect.width;
-    const scaleY = img.height / rect.height;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
     const currentX = (e.clientX - rect.left) * scaleX;
     const currentY = (e.clientY - rect.top) * scaleY;
     radius = Math.sqrt((currentX - startX) ** 2 + (currentY - startY) ** 2);
 
     // redesenha mapa e círculo em tempo real
-    ctx.drawImage(img, 0, 0);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = "red";
     ctx.lineWidth = 4;
     ctx.beginPath();
@@ -136,5 +138,7 @@
   });
 </script>
 
+
 </body>
 </html>
+
