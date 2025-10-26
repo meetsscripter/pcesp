@@ -217,7 +217,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     return;
   }
 
-  // coleta arquivos
+  // coleta arquivosx
   const files = filesInput.files;
   const filesData = [];
   for (const file of files) {
