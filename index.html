@@ -84,11 +84,14 @@
   let isDrawing = false;
   let startX, startY, radius = 0;
 
-  const scaleFactor = 2.5; // Aumenta a imagem em 2.5x (ajuste conforme necessário)
-
   img.onload = () => {
-    canvas.width = img.width * scaleFactor;
-    canvas.height = img.height * scaleFactor;
+    // Define o canvas para ocupar quase toda a largura da tela mantendo proporção
+    const maxWidth = window.innerWidth * 0.95; // 95% da largura da tela
+    const scale = maxWidth / img.width;
+
+    canvas.width = img.width * scale;
+    canvas.height = img.height * scale;
+
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     document.getElementById("mapContainer").style.display = "block";
   };
@@ -124,7 +127,6 @@
     if (!isDrawing) return;
     isDrawing = false;
 
-    // Salva posição e raio
     document.getElementById("mapX").value = Math.round(startX);
     document.getElementById("mapY").value = Math.round(startY);
 
@@ -136,9 +138,17 @@
     };
     reader.readAsDataURL(blob);
   });
+
+  // Atualiza canvas se janela for redimensionada
+  window.addEventListener("resize", () => {
+    const maxWidth = window.innerWidth * 0.95;
+    const scale = maxWidth / img.width;
+    canvas.width = img.width * scale;
+    canvas.height = img.height * scale;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  });
 </script>
 
 
 </body>
 </html>
-
