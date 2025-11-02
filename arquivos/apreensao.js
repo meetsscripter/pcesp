@@ -118,7 +118,12 @@ function createMaterialRow(name="", qty="") {
       <option value="9MM">9MM</option>
       <option value="Zip Lock">Zip Lock</option>
       <option value="Sementes de Marijuana">Sementes de Marijuana</option>
+      <option value="UMP">UMP</option>
       <option value="Fenilacetona">Fenilacetona</option>
+      <option value="Polvora">Polvora</option>
+      <option value="Acido cloridico">Acido cloridico</option>
+      <option value="Adubo">Adubo</option>
+      <option value="Cannabis Purple Haze">Cannabis Purple Haze</option>
     </select>
     <input type="number" class="material-qty" placeholder="Valor" min="1" value="${qty}" style="width:80px;margin-left:5px;" />
     <button type="button" class="removeMaterial">❌</button>
@@ -261,6 +266,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
 
 
 
