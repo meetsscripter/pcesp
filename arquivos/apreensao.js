@@ -120,8 +120,8 @@ function createMaterialRow(name="", qty="") {
       <option value="Sementes de Marijuana">Sementes de Marijuana</option>
       <option value="UMP">UMP</option>
       <option value="Fenilacetona">Fenilacetona</option>
-      <option value="Polvora">Polvora</option>
-      <option value="Acido cloridico">Acido cloridico</option>
+      <option value="Pólvora">Pólvora</option>
+      <option value="Ácido Clorídricoo">Ácido Clorídrico</option>
       <option value="Adubo">Adubo</option>
       <option value="Cannabis Purple Haze">Cannabis Purple Haze</option>
     </select>
@@ -266,6 +266,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
 
 
 
