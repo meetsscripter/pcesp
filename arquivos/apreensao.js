@@ -116,6 +116,7 @@ function createMaterialRow(name="", qty="") {
       <option value="Thompson">Thompson</option>
       <option value="MP5">MP5</option>
       <option value="9MM">9MM</option>
+      <option value="FNFAL">FNFAL</option>
       <option value="Zip Lock">Zip Lock</option>
       <option value="Sementes de Marijuana">Sementes de Marijuana</option>
       <option value="UMP">UMP</option>
@@ -266,6 +267,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
 
 
 
