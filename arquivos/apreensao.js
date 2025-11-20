@@ -118,6 +118,7 @@ function createMaterialRow(name="", qty="") {
       <option value="9MM">9MM</option>
       <option value="FNFAL">FNFAL</option>
       <option value="Zip Lock">Zip Lock</option>
+      <option value="Flipper Zero">Flipper Zero</option>
       <option value="Sementes de Marijuana">Sementes de Marijuana</option>
       <option value="UMP">UMP</option>
       <option value="Fenilacetona">Fenilacetona</option>
@@ -267,6 +268,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
 
 
 
