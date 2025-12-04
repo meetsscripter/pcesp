@@ -110,6 +110,9 @@ function createMaterialRow(name="", qty="") {
       <option value="Metafetamina">Metafetamina</option>
       <option value="Kevlar">Kevlar</option>
       <option value="Lockpick">Lockpick</option>
+      <option value="Metilamina">Metilamina</option>
+      <option value="Revolver">Revolver</option>
+      <option value="Flipper zero">Flipper zero</option>
       <option value="Peça de arma">Peça de arma</option>
       <option value="AK47">AK47</option>
       <option value="Glock">Glock</option>
@@ -268,6 +271,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
 
 
 
