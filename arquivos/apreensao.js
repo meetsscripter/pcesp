@@ -105,6 +105,7 @@ function createMaterialRow(name="", qty="") {
       <option value="Canabis">Canabis</option>
       <option value="Colete">Colete</option>
       <option value="762">762</option>
+      <option value="556">556</option>
       <option value="Maconha">Maconha</option>
       <option value="Dinheiro Sujo">Dinheiro Sujo</option>
       <option value="Metafetamina">Metafetamina</option>
@@ -115,6 +116,7 @@ function createMaterialRow(name="", qty="") {
       <option value="Flipper zero">Flipper zero</option>
       <option value="Peça de arma">Peça de arma</option>
       <option value="AK47">AK47</option>
+      <option value="M416">M416</option>
       <option value="Glock">Glock</option>
       <option value="Thompson">Thompson</option>
       <option value="MP5">MP5</option>
@@ -271,6 +273,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
 
 
 
