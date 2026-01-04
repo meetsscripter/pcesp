@@ -117,6 +117,7 @@ function createMaterialRow(name="", qty="") {
       <option value="Peça de arma">Peça de arma</option>
       <option value="AK47">AK47</option>
       <option value="M416">M416</option>
+      <option value="Tecido">Tecido</option>
       <option value="Glock">Glock</option>
       <option value="Thompson">Thompson</option>
       <option value="MP5">MP5</option>
@@ -273,6 +274,7 @@ document.getElementById('apreensaoForm').addEventListener('submit', async e => {
     btn.disabled = false;
   }
 });
+
 
 
 
